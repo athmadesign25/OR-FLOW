@@ -1,0 +1,2781 @@
+// @ts-nocheck
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { ChevronDown, ListFilter, Ellipsis } from 'lucide-react';
+
+import { Icon } from './components/common/Icon';
+import { Button } from './components/ui/button';
+
+// --- Mock Data ---
+    const initialWaitlist = [
+      {
+        id: 'WL-01',
+        mrn: '17650000967215',
+        patientName: 'Rajesh K',
+        age: 29,
+        gender: 'M',
+        dob: '05/11/1994',
+        bloodGroup: 'O+',
+        surgeon: 'Dr. devi Prasad Shetty',
+        surgeryName: 'Knee Replacement',
+        department: 'Orthopedics',
+        priority: 'Emergency',
+        preOp: {
+          financial: 'pending',
+          crossmatch: 'pending',
+          clinical: 'pending',
+          consent: 'pending',
+          pacText: 'PAC • Investigations Pending',
+          pacType: 'warning'
+        },
+        indicators: { text: 'Latex Allergy • Penicillin', sub: 'ASA IV', count: 3 },
+        patientStatus: 'Marked for IP',
+        requestDate: '24 Oct 2025',
+        requestTime: '13:45',
+        timeAgo: '30 min ago',
+        orStatus: 'Requested',
+        profile: {
+          ot: 'OT 3',
+          dateTime: '29 Oct 2025, 14:30',
+          duration: '1h 30mins',
+          diagnosis: 'Cataract | Left Eye',
+          endTime: '16:00'
+        },
+        team: {
+          assistantSurgeon: 'Dr. Rahul Kumar',
+          anaesthetist: 'Kumar Ravikant',
+          scrubNurse: 'Sharon DS',
+          floorNurse: 'Krishna Kumar'
+        },
+        supplies: {
+          instruments: 'Sternotomy Set, Sternal Saw...',
+          implants: 'Prosthetic Heart Valves, Grafts',
+          blood: 'CRYO POOR PLASMA, RED CELLS',
+          misc: 'Trolley, Drapes, Lights, UPS'
+        }
+      },
+      {
+        id: 'WL-02',
+        mrn: '18210000325687',
+        patientName: 'Karan D',
+        age: 45,
+        gender: 'M',
+        dob: '25/12/1978',
+        bloodGroup: 'B+',
+        surgeon: 'Dr. Rohit Desai',
+        surgeryName: 'Thyroidectomy',
+        department: 'Endocrinology',
+        priority: 'Emergency',
+        preOp: {
+          financial: 'available',
+          crossmatch: 'available',
+          clinical: 'available',
+          consent: 'available',
+          pacText: 'PAC • Fit to Proceed',
+          pacType: 'success'
+        },
+        indicators: { text: 'Hypertension • CAD', sub: 'ASA IV', count: 4 },
+        patientStatus: 'Marked for IP',
+        requestDate: '24 Oct 2025',
+        requestTime: '13:45',
+        timeAgo: '6 hours ago',
+        orStatus: 'Requested'
+      },
+      {
+        id: 'WL-03',
+        mrn: '18100000738964',
+        patientName: 'Meera L',
+        age: 32,
+        gender: 'F',
+        dob: '14/05/1991',
+        bloodGroup: 'O+',
+        surgeon: 'Dr. Leela Menon',
+        surgeryName: 'Gallbladder Removal',
+        department: 'Gastroenterology',
+        priority: 'Urgent',
+        preOp: {
+          financial: 'not-available',
+          crossmatch: 'not-available',
+          clinical: 'not-available',
+          consent: 'not-available',
+          pacText: 'PAC • Not Fit to Proceed',
+          pacType: 'danger'
+        },
+        indicators: { text: 'Latex Allergy • Penicillin', sub: 'ASA IV', count: 2 },
+        patientStatus: 'Under IP Care',
+        requestDate: '24 Oct 2025',
+        requestTime: '13:45',
+        timeAgo: '12 hours ago',
+        orStatus: 'Requested'
+      },
+      {
+        id: 'WL-04',
+        mrn: '18320000874920',
+        patientName: 'Pooja R',
+        age: 30,
+        gender: 'F',
+        dob: '06/06/1993',
+        bloodGroup: 'A+',
+        surgeon: 'Dr. Sameer Choudhary',
+        surgeryName: 'Lung Lobectomy',
+        department: 'Thoracic Surgery',
+        priority: 'Urgent',
+        preOp: {
+          financial: 'available',
+          crossmatch: 'available',
+          clinical: 'available',
+          consent: 'available',
+          pacText: 'PAC • Investigations Pending',
+          pacType: 'warning'
+        },
+        indicators: { text: 'Latex Allergy', sub: 'ASA IV', count: 3 },
+        patientStatus: 'Marked for IP',
+        requestDate: '24 Oct 2025',
+        requestTime: '13:45',
+        timeAgo: '18 hours ago',
+        orStatus: 'Requested'
+      },
+      {
+        id: 'WL-05',
+        mrn: '17870000495731',
+        patientName: 'Vikram J',
+        age: 41,
+        gender: 'M',
+        dob: '17/07/1982',
+        bloodGroup: 'B-',
+        surgeon: 'Dr. Nandini Verma',
+        surgeryName: 'Appendectomy',
+        department: 'General Surgery',
+        priority: 'Elective',
+        preOp: {
+          financial: 'available',
+          crossmatch: 'pending',
+          clinical: 'available',
+          consent: 'pending',
+          pacText: 'PAC • Investigations Pending',
+          pacType: 'warning'
+        },
+        indicators: { text: 'Latex Allergy • Penicillin', sub: 'ASA IV', count: 1 },
+        patientStatus: 'Marked for IP',
+        requestDate: '24 Oct 2025',
+        requestTime: '13:45',
+        timeAgo: '20 hours ago',
+        orStatus: 'Requested'
+      },
+      {
+        id: 'WL-06',
+        mrn: '17980000641872',
+        patientName: 'Sneha M',
+        age: 27,
+        gender: 'F',
+        dob: '09/01/1996',
+        bloodGroup: 'AB+',
+        surgeon: 'Dr. Kavita Joshi',
+        surgeryName: 'Hysterectomy',
+        department: 'Gynecology',
+        priority: 'Elective',
+        preOp: {
+          financial: 'available',
+          crossmatch: 'pending',
+          clinical: 'available',
+          consent: 'not-available',
+          pacText: 'PAC • Fit to Proceed',
+          pacType: 'success'
+        },
+        indicators: { text: 'Latex Allergy • Penicillin', sub: '< 4 METs', count: 3 },
+        patientStatus: 'Admitted to IP',
+        requestDate: '24 Oct 2025',
+        requestTime: '13:45',
+        timeAgo: '21 hours ago',
+        orStatus: 'Requested'
+      },
+      {
+        id: 'WL-07',
+        mrn: '17760000128379',
+        patientName: 'Anita P',
+        age: 35,
+        gender: 'F',
+        dob: '22/03/1988',
+        bloodGroup: 'O-',
+        surgeon: 'Dr. Rajesh Kumar',
+        surgeryName: 'Cataract Extraction',
+        department: 'Ophthalmology',
+        priority: 'Elective',
+        preOp: {
+          financial: 'available',
+          crossmatch: 'pending',
+          clinical: 'available',
+          consent: 'not-available',
+          pacText: 'PAC • Fit to Proceed',
+          pacType: 'success'
+        },
+        indicators: { text: 'Latex Allergy • Penicillin', sub: '< 4 METs', count: 2 },
+        patientStatus: 'Admitted to IP',
+        requestDate: '24 Oct 2025',
+        requestTime: '13:45',
+        timeAgo: '22 hours ago',
+        orStatus: 'Requested'
+      },
+      {
+        id: 'WL-08',
+        mrn: '18430000586143',
+        patientName: 'Devika M',
+        age: 36,
+        gender: 'M',
+        dob: '11/02/1987',
+        bloodGroup: 'A-',
+        surgeon: 'Dr. Priya Nair',
+        surgeryName: 'Hip Arthroscopy',
+        department: 'Sports Medicine',
+        priority: 'Elective',
+        preOp: {
+          financial: 'available',
+          crossmatch: 'pending',
+          clinical: 'available',
+          consent: 'not-available',
+          pacText: 'PAC • Anaesthetist review required',
+          pacType: 'alert'
+        },
+        indicators: { text: 'Latex Allergy • Penicillin', sub: 'ASA IV', count: 1 },
+        patientStatus: 'Admitted to IP',
+        requestDate: '24 Oct 2025',
+        requestTime: '13:45',
+        timeAgo: '1 month ago',
+        orStatus: 'Requested'
+      }
+    ];
+
+    const initialScheduled = [
+      {
+        id: 'SCH-01',
+        orNo: 'OR - 6',
+        mrn: '17650000967215',
+        patientName: 'Rajesh K',
+        age: 29,
+        gender: 'M',
+        dob: '05/11/1994',
+        bloodGroup: 'O+',
+        surgeon: 'Dr. devi Prasad Shetty',
+        surgeryName: 'Knee Replacement',
+        department: 'Orthopedics',
+        priority: 'Emergency',
+        surgeryDateTime: '24 Oct 2026',
+        surgeryTime: '12:15 - 13:45',
+        preOp: {
+          financial: 'pending',
+          crossmatch: 'pending',
+          clinical: 'pending',
+          consent: 'pending',
+          pacText: 'PAC • Investigations Pending',
+          pacType: 'warning'
+        },
+        indicators: { text: 'Latex Allergy • Penicillin', sub: '< 4 METs', count: 4 },
+        patientStatus: 'Marked for IP',
+        orStatus: 'Scheduled',
+        endTime: '16:00',
+        surgeryProfile: {
+          ot: 'OT 3',
+          dateTime: '29 Oct 2025, 14:30',
+          duration: '1h 30mins',
+          diagnosis: 'Cataract | Left Eye'
+        },
+        surgicalTeam: {
+          assistantSurgeon: 'Dr. Rahul Kumar',
+          anaesthetist: 'Kumar Ravikant',
+          scrubNurse: 'Sharon DS',
+          floorNurse: 'Krishna Kumar'
+        },
+        bloodDevices: {
+          instruments: 'Sternotomy Set, Sternal Saw...',
+          implants: 'Prosthetic Heart Valves, Grafts',
+          blood: 'CRYO POOR PLASMA, RED CELLS',
+          misc: 'Trolley, Drapes, Lights, UPS'
+        },
+        fullTeam: [
+          { role: 'Assistant Surgeon', name: 'Dr. Rahul Kumar' },
+          { role: 'Anaesthetist', name: 'Kumar Ravikant' },
+          { role: 'Assistant Anaesthetist', name: 'Kumar Ravikant' },
+          { role: 'Physician Assistant', name: 'Kumar Ravikant' },
+          { role: 'Scrub Nurse', name: 'Sharon DS' },
+          { role: 'Floor Nurse', name: 'Krishna Kumar' },
+          { role: 'Technician', name: 'Krishna Kumar' }
+        ]
+      },
+      {
+        id: 'SCH-02',
+        orNo: 'OR - 7',
+        mrn: '18210000325687',
+        patientName: 'Karan D',
+        age: 45,
+        gender: 'M',
+        dob: '25/12/1978',
+        bloodGroup: 'O+',
+        surgeon: 'Dr. Rohit Desai',
+        surgeryName: 'Thyroidectomy',
+        department: 'Endocrinology',
+        priority: 'Urgent',
+        surgeryDateTime: '24 Oct 2026',
+        surgeryTime: '12:15 - 13:45',
+        preOp: {
+          financial: 'available',
+          crossmatch: 'available',
+          clinical: 'available',
+          consent: 'available',
+          pacText: 'PAC • Fit to Proceed',
+          pacType: 'success'
+        },
+        indicators: { text: 'Latex Allergy • Penicillin', sub: '< 4 METs', count: 4 },
+        patientStatus: 'Marked for IP',
+        orStatus: 'Scheduled',
+        endTime: '15:30',
+        surgeryProfile: {
+          ot: 'OT 2',
+          dateTime: '24 Oct 2026, 12:15',
+          duration: '1h 30mins',
+          diagnosis: 'Multinodular Goiter'
+        },
+        surgicalTeam: {
+          assistantSurgeon: 'Dr. Neha Singh',
+          anaesthetist: 'Dr. Priya Nair',
+          scrubNurse: 'Ananya S',
+          floorNurse: 'Suresh M'
+        },
+        bloodDevices: {
+          instruments: 'Thyroidectomy Tray, Harmonic Scalpel',
+          implants: 'Hemostatic Clips, Surgicel',
+          blood: 'TYPE SPECIFIC RBC',
+          misc: 'Bipolar Cautery, Head Ring'
+        },
+        fullTeam: [
+          { role: 'Assistant Surgeon', name: 'Dr. Neha Singh' },
+          { role: 'Anaesthetist', name: 'Dr. Priya Nair' },
+          { role: 'Assistant Anaesthetist', name: 'Dr. Priya Nair' },
+          { role: 'Physician Assistant', name: 'Ananya S' },
+          { role: 'Scrub Nurse', name: 'Ananya S' },
+          { role: 'Floor Nurse', name: 'Suresh M' },
+          { role: 'Technician', name: 'Suresh M' }
+        ]
+      },
+      {
+        id: 'SCH-03',
+        orNo: 'OR - 8',
+        mrn: '18100000738964',
+        patientName: 'Meera L',
+        age: 32,
+        gender: 'F',
+        dob: '14/05/1991',
+        bloodGroup: 'O+',
+        surgeon: 'Dr. Leela Menon',
+        surgeryName: 'Gallbladder Removal',
+        department: 'Gastroenterology',
+        priority: 'Elective',
+        surgeryDateTime: '24 Oct 2026',
+        surgeryTime: '12:15 - 13:45',
+        preOp: {
+          financial: 'available',
+          crossmatch: 'available',
+          clinical: 'available',
+          consent: 'available',
+          pacText: 'PAC • Fit to Proceed',
+          pacType: 'success'
+        },
+        indicators: { text: 'Latex Allergy • Penicillin', sub: '< 4 METs', count: 4 },
+        patientStatus: 'Marked for IP',
+        orStatus: 'Scheduled',
+        endTime: '15:00',
+        surgeryProfile: {
+          ot: 'OT 4',
+          dateTime: '24 Oct 2026, 12:15',
+          duration: '1h 15mins',
+          diagnosis: 'Symptomatic Cholelithiasis'
+        },
+        surgicalTeam: {
+          assistantSurgeon: 'Dr. Amit Patel',
+          anaesthetist: 'Dr. Sunita Rao',
+          scrubNurse: 'Marykutty J',
+          floorNurse: 'Ramesh V'
+        },
+        bloodDevices: {
+          instruments: 'Laparoscopic Cholecystectomy Set',
+          implants: 'Endoloops, Titanium Clips',
+          blood: 'CROSSMATCHED 1 UNIT',
+          misc: 'CO2 Insufflator, Veress Needle'
+        },
+        fullTeam: [
+          { role: 'Assistant Surgeon', name: 'Dr. Amit Patel' },
+          { role: 'Anaesthetist', name: 'Dr. Sunita Rao' },
+          { role: 'Assistant Anaesthetist', name: 'Dr. Sunita Rao' },
+          { role: 'Physician Assistant', name: 'Marykutty J' },
+          { role: 'Scrub Nurse', name: 'Marykutty J' },
+          { role: 'Floor Nurse', name: 'Ramesh V' },
+          { role: 'Technician', name: 'Ramesh V' }
+        ]
+      },
+      {
+        id: 'SCH-04',
+        orNo: 'OR - 9',
+        mrn: '18320000874920',
+        patientName: 'Pooja R',
+        age: 30,
+        gender: 'F',
+        dob: '06/06/1993',
+        bloodGroup: 'O+',
+        surgeon: 'Dr. Sameer Choudhary',
+        surgeryName: 'Lung Lobectomy',
+        department: 'Thoracic Surgery',
+        priority: 'Elective',
+        surgeryDateTime: '24 Oct 2026',
+        surgeryTime: '12:15 - 13:45',
+        preOp: {
+          financial: 'available',
+          crossmatch: 'available',
+          clinical: 'available',
+          consent: 'available',
+          pacText: 'PAC • Fit to Proceed',
+          pacType: 'success'
+        },
+        indicators: { text: 'Latex Allergy • Penicillin', sub: '< 4 METs', count: 4 },
+        patientStatus: 'Marked for IP',
+        orStatus: 'Scheduled',
+        endTime: '16:45',
+        surgeryProfile: {
+          ot: 'OT 5',
+          dateTime: '24 Oct 2026, 12:15',
+          duration: '2h 30mins',
+          diagnosis: 'Non-Small Cell Lung Carcinoma'
+        },
+        surgicalTeam: {
+          assistantSurgeon: 'Dr. Vikram Seth',
+          anaesthetist: 'Dr. Alok Verma',
+          scrubNurse: 'Geetha P',
+          floorNurse: 'Manoj K'
+        },
+        bloodDevices: {
+          instruments: 'Thoracotomy Tray, Rib Spreader',
+          implants: 'Endostaplers, Vascular Clips',
+          blood: 'PACKED CELLS 2 UNITS, FFP',
+          misc: 'Chest Tube, Pleur-Evac Drainage'
+        },
+        fullTeam: [
+          { role: 'Assistant Surgeon', name: 'Dr. Vikram Seth' },
+          { role: 'Anaesthetist', name: 'Dr. Alok Verma' },
+          { role: 'Assistant Anaesthetist', name: 'Dr. Alok Verma' },
+          { role: 'Physician Assistant', name: 'Geetha P' },
+          { role: 'Scrub Nurse', name: 'Geetha P' },
+          { role: 'Floor Nurse', name: 'Manoj K' },
+          { role: 'Technician', name: 'Manoj K' }
+        ]
+      }
+    ];
+
+    // --- Main App Root Component ---
+    function App() {
+      // Global Navigation State
+      const [currentNav, setCurrentNav] = useState('manager'); // 'manager' | 'live' | 'create-request' | 'schedule-or' | 'workflow'
+      const [activeTab, setActiveTab] = useState('waitlist'); // 'waitlist' | 'scheduled' | 'overview'
+      const [liveSubTab, setLiveSubTab] = useState('action-center'); // 'live-updates' | 'action-center'
+      const [liveViewMode, setLiveViewMode] = useState('kanban'); // 'kanban' | 'list'
+      const [overviewMode, setOverviewMode] = useState('day'); // 'day' | 'week' | 'month'
+
+      // Sub-Menu Flyout Drawer
+      const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+      // Search & Filters
+      const [searchQuery, setSearchQuery] = useState('');
+      const [filterApplied, setFilterApplied] = useState(false);
+      const [activeFilterCount, setActiveFilterCount] = useState(5);
+
+      // Modals & Drawers
+      const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+      const [isExportOpen, setIsExportOpen] = useState(false);
+      const [isLegendOpen, setIsLegendOpen] = useState(false);
+      const [isOverviewLegendOpen, setIsOverviewLegendOpen] = useState(false);
+      const [isPreOpModalOpen, setIsPreOpModalOpen] = useState(false);
+      const [selectedPreOpPatient, setSelectedPreOpPatient] = useState(null);
+      const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+      const [selectedCancelCase, setSelectedCancelCase] = useState(null);
+      const [cancelReason, setCancelReason] = useState('');
+      const [rowActionMenuId, setRowActionMenuId] = useState(null);
+      const [isTeamDrawerOpen, setIsTeamDrawerOpen] = useState(false);
+      const [isDayDrawerOpen, setIsDayDrawerOpen] = useState(false);
+      const [selectedDayProcedures, setSelectedDayProcedures] = useState([]);
+      const [isWorkPatternModalOpen, setIsWorkPatternModalOpen] = useState(false);
+      const [isSchedulePromptOpen, setIsSchedulePromptOpen] = useState(false);
+      const [activeClinicalIndicatorPopover, setActiveClinicalIndicatorPopover] = useState(null);
+      const [selectedDaySurgeryPopover, setSelectedDaySurgeryPopover] = useState(null);
+      const [selectedUnavailablePopover, setSelectedUnavailablePopover] = useState(null);
+      const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
+
+      // Live Voice Assistant & Workflow State
+      const [isListening, setIsListening] = useState(false);
+      const [isWorkflowDetailsOpen, setIsWorkflowDetailsOpen] = useState(false);
+      const [activeStageId, setActiveStageId] = useState('stg-2');
+      const [workflowChecklist, setWorkflowChecklist] = useState([
+        { id: 1, text: 'Blood Transfusion Consent *', value: 'No' },
+        { id: 2, text: 'Anesthesia Consent *', value: 'No' },
+        { id: 3, text: 'Procedure / Surgery Consent *', value: 'No' },
+        { id: 4, text: 'Surgical Site Marking Verified *', value: 'Yes' },
+        { id: 5, text: 'ID Band *', value: null },
+        { id: 6, text: 'Prosthesis available *', value: null },
+        { id: 7, text: 'Implants available *', value: null }
+      ]);
+
+      // Dynamic data stores
+      const [waitlist, setWaitlist] = useState(initialWaitlist);
+      const [scheduled, setScheduled] = useState(initialScheduled);
+      const [expandedScheduledId, setExpandedScheduledId] = useState<string | null>('SCH-01');
+      const [selectedTeamCase, setSelectedTeamCase] = useState<any>(null);
+
+      const toggleScheduledExpand = (id: string) => {
+        setExpandedScheduledId(prev => (prev === id ? null : id));
+      };
+
+      // Handle Cancel Submission
+      const handleConfirmCancel = () => {
+        if (!selectedCancelCase) return;
+        setWaitlist(prev => prev.filter(c => c.id !== selectedCancelCase.id));
+        setScheduled(prev => prev.filter(c => c.id !== selectedCancelCase.id));
+        setIsCancelModalOpen(false);
+        setCancelReason('');
+        setSelectedCancelCase(null);
+      };
+
+      // Voice Assistant simulation
+      const toggleVoiceAssistant = () => {
+        if (!isListening) {
+          setIsListening(true);
+          setTimeout(() => {
+            setWorkflowChecklist(prev => prev.map(item => {
+              if (item.id === 5) return { ...item, value: 'Yes' };
+              if (item.id === 6) return { ...item, value: 'Yes' };
+              if (item.id === 7) return { ...item, value: 'Yes' };
+              return item;
+            }));
+          }, 3000);
+        } else {
+          setIsListening(false);
+        }
+      };
+
+      return (
+        <div className="flex h-screen w-screen overflow-hidden bg-slate-50 text-slate-800">
+          
+          {/* ===================== SLIM SIDEBAR (56px) ===================== */}
+          <aside className="w-14 bg-white border-r border-slate-200 flex flex-col items-center py-3 select-none z-40 shrink-0">
+            {/* Brand Logo */}
+            <button 
+              onClick={() => setIsMenuOpen(!isMenuOpen)} 
+              title="Toggle Menu"
+              className="w-10 h-10 rounded-lg flex items-center justify-center text-red-500 font-bold text-xl hover:bg-slate-100 transition-colors"
+            >
+              <div className="w-7 h-7 rounded-full border-2 border-red-500 flex items-center justify-center text-xs font-black">
+                α
+              </div>
+            </button>
+
+            {/* Navigation Icons Rail */}
+            <div className="flex flex-col gap-3 mt-6 items-center flex-1 overflow-y-auto w-full">
+              <button title="Dashboard" className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg"><Icon name="kanban" className="w-5 h-5"/></button>
+              <button title="Orders" className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg"><Icon name="clipboard" className="w-5 h-5"/></button>
+              <button title="Pharmacy" className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg"><span className="text-sm font-bold">Rx</span></button>
+              <button title="Clinics" className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg"><Icon name="users" className="w-5 h-5"/></button>
+              <button title="Reports" className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg"><Icon name="calendar" className="w-5 h-5"/></button>
+              <button title="Personnel" className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg"><Icon name="search" className="w-5 h-5"/></button>
+              
+              {/* ORM (ACTIVE ICON CONTAINER) */}
+              <button 
+                onClick={() => setIsMenuOpen(true)}
+                title="OR Management (ORM)" 
+                className={`p-2 rounded-lg transition-colors relative ${currentNav === 'manager' || currentNav === 'live' ? 'bg-sky-100 text-sky-700' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'}`}
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path d="M4 12h16M12 4v16"/>
+                  <circle cx="12" cy="12" r="9"/>
+                </svg>
+              </button>
+
+              <button title="Documents" className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg"><Icon name="paperclip" className="w-5 h-5"/></button>
+              <button title="Lab" className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg"><span className="text-xs font-semibold">LAB</span></button>
+            </div>
+
+            {/* Bottom Settings */}
+            <div className="mt-auto flex flex-col items-center gap-2">
+              <button title="Settings" className="p-2 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+              </button>
+            </div>
+          </aside>
+
+          {/* ===================== SUB-NAV FLYOUT DRAWER ===================== */}
+          {isMenuOpen && (
+            <div 
+              className="fixed inset-0 bg-black/20 z-40"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <div 
+                className="absolute left-14 top-0 bottom-0 w-64 bg-white shadow-2xl border-r border-slate-200 p-4 flex flex-col z-50 animate-in slide-in-from-left duration-200"
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                  <h2 className="text-lg font-bold text-slate-800">ORM</h2>
+                  <button onClick={() => setIsMenuOpen(false)} className="text-slate-400 hover:text-slate-600">
+                    <Icon name="cross" className="w-5 h-5"/>
+                  </button>
+                </div>
+                <div className="mt-4 flex flex-col gap-1">
+                  <button 
+                    onClick={() => { setCurrentNav('manager'); setIsMenuOpen(false); }}
+                    className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center justify-between ${currentNav === 'manager' ? 'bg-sky-100 text-sky-700' : 'text-slate-700 hover:bg-slate-100'}`}
+                  >
+                    <span>OR Manager</span>
+                    {currentNav === 'manager' && <span className="w-2 h-2 rounded-full bg-sky-600"></span>}
+                  </button>
+                  <button 
+                    onClick={() => { setCurrentNav('live'); setIsMenuOpen(false); }}
+                    className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center justify-between ${currentNav === 'live' ? 'bg-sky-100 text-sky-700' : 'text-slate-700 hover:bg-slate-100'}`}
+                  >
+                    <span>OR Live</span>
+                    {currentNav === 'live' && <span className="w-2 h-2 rounded-full bg-sky-600"></span>}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ===================== MAIN APPLICATION WORKSPACE ===================== */}
+          <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+            
+            {/* Top Bar Header */}
+            <header className="h-14 bg-white border-b border-slate-200 px-6 flex items-center justify-between shrink-0 z-20">
+              {/* Left Breadcrumb */}
+              <div className="flex items-center gap-2 text-sm">
+                <button 
+                  onClick={() => setIsMenuOpen(true)}
+                  className="font-bold text-slate-900 hover:text-sky-600 transition-colors"
+                >
+                  ORM
+                </button>
+                <span className="text-slate-400">&gt;</span>
+                <span className="font-semibold text-slate-700">
+                  {currentNav === 'manager' && (activeTab === 'overview' ? 'OR Schedule' : 'OR Manager')}
+                  {currentNav === 'live' && 'OR Live'}
+                  {currentNav === 'create-request' && 'Create New Request'}
+                  {currentNav === 'schedule-or' && 'Schedule OR'}
+                  {currentNav === 'workflow' && 'OR Live > Surgical Workflow'}
+                </span>
+              </div>
+
+              {/* Right Global Actions */}
+              <div className="flex items-center gap-4">
+                <button title="Favorites" className="text-slate-500 hover:text-slate-800"><Icon name="paperclip" className="w-4 h-4"/></button>
+                <button title="Tasks" className="text-slate-500 hover:text-slate-800"><Icon name="clipboard" className="w-4 h-4"/></button>
+                <button title="Notifications" className="text-slate-500 hover:text-slate-800 relative">
+                  <Icon name="bell" className="w-4 h-4"/>
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white"></span>
+                </button>
+                <button title="Help" className="text-slate-500 hover:text-slate-800"><Icon name="info" className="w-4 h-4"/></button>
+                <button title="Support" className="text-slate-500 hover:text-slate-800"><Icon name="users" className="w-4 h-4"/></button>
+
+                {/* User Avatar & Clinic */}
+                <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
+                  <div className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold text-xs ring-1 ring-red-200">
+                    JS
+                  </div>
+                  <div className="flex flex-col text-left">
+                    <span className="text-xs font-bold text-slate-900 leading-tight">Jayant Shankar</span>
+                    <span className="text-[10px] text-slate-500 leading-tight">Naraya..mult..ital, HSR Layout</span>
+                  </div>
+                  <button className="text-slate-400 hover:text-slate-700 ml-1">
+                    <Icon name="more-vertical" className="w-4 h-4"/>
+                  </button>
+                </div>
+              </div>
+            </header>
+
+            {/* Body Content Router */}
+            <main className="flex-1 overflow-y-auto bg-slate-50 p-6">
+              
+              {/* ===================== VIEW 1: OR MANAGER ===================== */}
+              {currentNav === 'manager' && (
+                <div className="max-w-[1600px] mx-auto flex flex-col gap-5">
+                  
+                  {/* Top Tabs & Action Row */}
+                  <div className="flex items-center justify-between flex-wrap gap-4 border-b border-slate-200 pb-3">
+                    
+                    {/* Module Tabs */}
+                    <div className="flex items-center gap-6">
+                      <button 
+                        onClick={() => setActiveTab('waitlist')}
+                        className={`text-sm font-semibold pb-3 -mb-3 transition-colors relative ${activeTab === 'waitlist' ? 'text-[#1677FF] border-b-2 border-[#1677FF]' : 'text-slate-600 hover:text-slate-900'}`}
+                      >
+                        Surgery wait list (14)
+                      </button>
+                      <button 
+                        onClick={() => setActiveTab('scheduled')}
+                        className={`text-sm font-semibold pb-3 -mb-3 transition-colors relative ${activeTab === 'scheduled' ? 'text-[#1677FF] border-b-2 border-[#1677FF]' : 'text-slate-600 hover:text-slate-900'}`}
+                      >
+                        Scheduled Surgery (4)
+                      </button>
+                      <button 
+                        onClick={() => setActiveTab('overview')}
+                        className={`text-sm font-semibold pb-3 -mb-3 transition-colors relative ${activeTab === 'overview' ? 'text-[#1677FF] border-b-2 border-[#1677FF]' : 'text-slate-600 hover:text-slate-900'}`}
+                      >
+                        OR Overview
+                      </button>
+
+                      {/* Info Icon Popover for Waitlist / Scheduled */}
+                      {activeTab !== 'overview' && (
+                        <div className="relative">
+                          <button 
+                            onClick={() => setIsLegendOpen(!isLegendOpen)}
+                            title="System Legend"
+                            className="p-1 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-200 transition-colors"
+                          >
+                            <Icon name="info" className="w-4 h-4"/>
+                          </button>
+
+                          {/* Legend Popover */}
+                          {isLegendOpen && (
+                            <div className="absolute left-0 top-8 w-96 bg-white border border-slate-200 rounded-xl shadow-2xl p-4 z-50 animate-in fade-in duration-150">
+                              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Status Legend</h4>
+                                <button onClick={() => setIsLegendOpen(false)} className="text-slate-400 hover:text-slate-600"><Icon name="cross" className="w-3.5 h-3.5"/></button>
+                              </div>
+                              <div className="grid grid-cols-2 gap-4 mt-3 text-xs">
+                                <div>
+                                  <span className="font-semibold text-slate-700 block mb-2">Surgery Priority</span>
+                                  <div className="space-y-1.5">
+                                    <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-red-600"></span><span>Emergency</span></div>
+                                    <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span><span>Urgent</span></div>
+                                    <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span><span>Elective</span></div>
+                                  </div>
+                                </div>
+                                <div>
+                                  <span className="font-semibold text-slate-700 block mb-2">Pre-Op Clearance</span>
+                                  <div className="space-y-1.5">
+                                    <div className="flex items-center gap-1.5 text-amber-600"><Icon name="alert" className="w-3.5 h-3.5"/><span>Review required</span></div>
+                                    <div className="flex items-center gap-1.5 text-emerald-600"><Icon name="check" className="w-3.5 h-3.5"/><span>Available</span></div>
+                                    <div className="flex items-center gap-1.5 text-orange-600"><Icon name="clock" className="w-3.5 h-3.5"/><span>Pending</span></div>
+                                    <div className="flex items-center gap-1.5 text-red-600"><Icon name="cross" className="w-3.5 h-3.5"/><span>Not Available</span></div>
+                                  </div>
+                                </div>
+                                <div>
+                                  <span className="font-semibold text-slate-700 block mb-2">Clinical Indicators</span>
+                                  <div className="space-y-1 text-xs">
+                                    <div className="text-orange-700 font-medium">High</div>
+                                    <div className="text-red-600 font-medium">Severe</div>
+                                    <div className="text-emerald-600 font-medium">Normal</div>
+                                  </div>
+                                </div>
+                                <div>
+                                  <span className="font-semibold text-slate-700 block mb-2">OT Status</span>
+                                  <div className="space-y-1">
+                                    <span className="inline-block px-2 py-0.5 rounded text-[11px] bg-blue-100 text-blue-800">Requested</span>
+                                    <span className="inline-block px-2 py-0.5 rounded text-[11px] bg-purple-100 text-purple-800 ml-1">Scheduled</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Right Controls */}
+                    {activeTab === 'overview' ? (
+                      /* ===================== OR OVERVIEW HEADER CONTROLS ===================== */
+                      <div className="flex items-center gap-3">
+                        {/* 1. Information icon */}
+                        <div className="relative">
+                          <button 
+                            onClick={() => setIsOverviewLegendOpen(!isOverviewLegendOpen)}
+                            title="OR Overview Legend"
+                            className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                          >
+                            <Icon name="info" className="w-4 h-4"/>
+                          </button>
+
+                          {isOverviewLegendOpen && (
+                            <div className="absolute right-0 top-10 w-48 bg-white border border-slate-200 rounded-xl shadow-2xl p-3 z-50 animate-in fade-in">
+                              <div className="space-y-2 text-xs">
+                                <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span><span>Completed</span></div>
+                                <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span><span>In Progress</span></div>
+                                <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-purple-600"></span><span>Scheduled</span></div>
+                                <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span><span>Requested</span></div>
+                                <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-red-600"></span><span>Cancelled</span></div>
+                                <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-slate-500"></span><span>Deferred</span></div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* 2. Share/export icon */}
+                        <button 
+                          onClick={() => alert('Exporting / sharing OR Schedule...')}
+                          title="Share / Export"
+                          className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                        >
+                          <Icon name="external" className="w-4 h-4"/>
+                        </button>
+
+                        {/* 3. Day / Week / Month segmented controls + 4. Three-dot overflow menu */}
+                        <div className="relative">
+                          <div className="flex items-center border border-slate-300 rounded-lg overflow-hidden bg-white text-xs font-semibold">
+                            <button 
+                              onClick={() => setOverviewMode('day')}
+                              className={`px-4 py-1.5 transition-colors ${
+                                overviewMode === 'day' 
+                                  ? 'bg-white text-[#1677FF] border border-[#1677FF] -my-px -ml-px rounded-lg z-10' 
+                                  : 'text-slate-600 hover:text-slate-900 border-r border-slate-200'
+                              }`}
+                            >
+                              Day
+                            </button>
+                            <button 
+                              onClick={() => setOverviewMode('week')}
+                              className={`px-4 py-1.5 transition-colors border-r border-slate-200 ${
+                                overviewMode === 'week' 
+                                  ? 'bg-white text-[#1677FF] border border-[#1677FF] -my-px rounded-lg z-10' 
+                                  : 'text-slate-600 hover:text-slate-900'
+                              }`}
+                            >
+                              Week
+                            </button>
+                            <button 
+                              onClick={() => setOverviewMode('month')}
+                              className={`px-4 py-1.5 transition-colors ${
+                                overviewMode === 'month' 
+                                  ? 'bg-white text-[#1677FF] border border-[#1677FF] -my-px rounded-lg z-10' 
+                                  : 'text-slate-600 hover:text-slate-900'
+                              }`}
+                            >
+                              Month
+                            </button>
+                            <button 
+                              onClick={() => setIsMonthPickerOpen(!isMonthPickerOpen)}
+                              className="px-3 py-1.5 text-slate-600 hover:text-slate-900 font-bold border-l border-slate-200"
+                              title="More options / Month calendar"
+                            >
+                              ···
+                            </button>
+                          </div>
+
+                          {/* Month calendar popover when clicking ... */}
+                          {isMonthPickerOpen && (
+                            <div className="absolute right-0 top-10 bg-white border border-slate-200 rounded-xl shadow-2xl p-4 w-72 z-50 animate-in fade-in">
+                              <div className="flex justify-between items-center mb-3">
+                                <span className="text-xs font-bold text-slate-800">Jun 2026</span>
+                                <div className="flex gap-1 text-slate-400">
+                                  <button className="hover:text-slate-800 px-1">‹</button>
+                                  <button className="hover:text-slate-800 px-1">›</button>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-7 gap-1 text-[11px] text-center">
+                                {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(d => (
+                                  <span key={d} className="font-semibold text-slate-400 py-1">{d}</span>
+                                ))}
+                                {Array.from({ length: 30 }, (_, i) => i + 1).map(day => (
+                                  <button 
+                                    key={day} 
+                                    onClick={() => setIsMonthPickerOpen(false)}
+                                    className={`py-1 rounded hover:bg-blue-50 ${day === 11 ? 'bg-[#1677FF] text-white font-bold' : 'text-slate-700'}`}
+                                  >
+                                    {day}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* 5. Create Work Pattern — outlined button */}
+                        <Button
+                          variant="outline"
+                          onClick={() => setIsWorkPatternModalOpen(true)}
+                          className="h-9 px-4 text-xs font-semibold rounded-lg"
+                        >
+                          Create Work Pattern
+                        </Button>
+
+                        {/* 6. Create New Request — primary filled button */}
+                        <Button
+                          variant="primary"
+                          onClick={() => setCurrentNav('create-request')}
+                          className="h-9 px-4 text-xs font-semibold rounded-lg"
+                        >
+                          Create New Request
+                        </Button>
+                      </div>
+                    ) : (
+                      /* ===================== WAITLIST & SCHEDULED HEADER CONTROLS ===================== */
+                      <div className="flex items-center gap-3">
+                        {/* Search Input */}
+                        <div className="relative w-72">
+                          <Icon name="search" className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"/>
+                          <input 
+                            type="text" 
+                            placeholder="Search by patient name & MRN"
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                            className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1677FF] placeholder-slate-400"
+                          />
+                        </div>
+
+                        {/* Filter Button */}
+                        <button 
+                          onClick={() => setIsFilterModalOpen(true)}
+                          className={`h-9 ${filterApplied ? 'px-2.5' : 'w-9'} border rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${filterApplied ? 'border-[#1677FF] text-[#1677FF] bg-blue-50' : 'border-slate-300 bg-white hover:bg-slate-50'}`}
+                        >
+                          <ListFilter size={20} className={filterApplied ? 'text-[#1677FF]' : 'text-[#1F1F1F]'} />
+                          {filterApplied && <span>{activeFilterCount}</span>}
+                          {filterApplied && (
+                            <span onClick={(e) => { e.stopPropagation(); setFilterApplied(false); }} className="hover:text-red-600">✕</span>
+                          )}
+                        </button>
+
+                        {/* More (...) Export Button */}
+                        <div className="relative">
+                          <button 
+                            onClick={() => setIsExportOpen(!isExportOpen)}
+                            className="h-9 w-9 flex items-center justify-center border border-slate-300 bg-white rounded-lg hover:bg-slate-50"
+                          >
+                            <Ellipsis size={20} className="text-[#1F1F1F]" />
+                          </button>
+                          {isExportOpen && (
+                            <div className="absolute right-0 top-9 w-32 bg-white border border-slate-200 rounded-lg shadow-xl p-1 z-50 animate-in fade-in">
+                              <button 
+                                onClick={() => { alert('Exporting waitlist data to Excel / CSV...'); setIsExportOpen(false); }}
+                                className="w-full text-left px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 rounded flex items-center gap-2"
+                              >
+                                <Icon name="external" className="w-3.5 h-3.5"/>
+                                Export
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Primary CTA: Create New Request */}
+                        <Button
+                          variant="primary"
+                          onClick={() => setCurrentNav('create-request')}
+                          className="h-9 px-4 rounded-lg text-xs font-semibold"
+                        >
+                          Create New Request
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ===================== TAB 1: WAITLIST TABLE ===================== */}
+                  {activeTab === 'waitlist' && (
+                    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold select-none">
+                            <tr>
+                              <th className="py-3 px-4">Patient</th>
+                              <th className="py-3 px-4">Surgeon</th>
+                              <th className="py-3 px-4">Surgery/Department</th>
+                              <th className="py-3 px-4">Pre-Op Clearance</th>
+                              <th className="py-3 px-4">Clinical indicators</th>
+                              <th className="py-3 px-4">Patient Status</th>
+                              <th className="py-3 px-4">Request Date & Time</th>
+                              <th className="py-3 px-4">OR Status</th>
+                              <th className="py-3 px-4 text-right">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 text-slate-700">
+                            {waitlist
+                              .filter(c => c.patientName.toLowerCase().includes(searchQuery.toLowerCase()) || c.mrn.includes(searchQuery))
+                              .map(item => (
+                                <tr key={item.id} className="hover:bg-slate-50 transition-colors">
+                                  {/* Patient Cell with Priority Dot */}
+                                      <td className="py-3 px-4">
+                                        <div className="flex items-start gap-2">
+                                          <span 
+                                            title={item.priority}
+                                            className={`w-2.5 h-2.5 rounded-full mt-1 shrink-0 ${item.priority === 'Emergency' ? 'bg-red-500' : item.priority === 'Urgent' ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                                          ></span>
+                                          <div>
+                                            <div className="font-semibold text-slate-900">
+                                              {item.patientName} ({item.gender} / {item.age}) {item.dob}
+                                            </div>
+                                            <div className="text-slate-500 text-[11px]">{item.mrn}</div>
+                                          </div>
+                                        </div>
+                                      </td>
+
+                                      {/* Surgeon */}
+                                      <td className="py-3 px-4 font-medium text-slate-800">
+                                        {item.surgeon}
+                                      </td>
+
+                                      {/* Surgery & Department */}
+                                      <td className="py-3 px-4">
+                                        <div className="font-semibold text-slate-900">{item.surgeryName}</div>
+                                        <div className="text-slate-500 text-[11px]">{item.department}</div>
+                                      </td>
+
+                                      {/* Pre-Op Clearance (2x2 Grid + PAC status) */}
+                                      <td className="py-3 px-4">
+                                        <div 
+                                          onClick={() => { setSelectedPreOpPatient(item); setIsPreOpModalOpen(true); }}
+                                          className="cursor-pointer hover:opacity-80 transition-opacity"
+                                        >
+                                          <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px]">
+                                            <span className="flex items-center gap-1 text-slate-600">
+                                              {item.preOp.financial === 'available' ? <Icon name="check" className="w-3 h-3 text-emerald-600"/> : item.preOp.financial === 'pending' ? <Icon name="clock" className="w-3 h-3 text-amber-500"/> : <Icon name="cross" className="w-3 h-3 text-red-500"/>}
+                                              <span>Financial</span>
+                                            </span>
+                                            <span className="flex items-center gap-1 text-slate-600">
+                                              {item.preOp.crossmatch === 'available' ? <Icon name="check" className="w-3 h-3 text-emerald-600"/> : item.preOp.crossmatch === 'pending' ? <Icon name="clock" className="w-3 h-3 text-amber-500"/> : <Icon name="cross" className="w-3 h-3 text-red-500"/>}
+                                              <span className="underline decoration-amber-400">Crossmatch</span>
+                                            </span>
+                                            <span className="flex items-center gap-1 text-slate-600">
+                                              {item.preOp.clinical === 'available' ? <Icon name="check" className="w-3 h-3 text-emerald-600"/> : item.preOp.clinical === 'pending' ? <Icon name="clock" className="w-3 h-3 text-amber-500"/> : <Icon name="cross" className="w-3 h-3 text-red-500"/>}
+                                              <span>Clinical</span>
+                                            </span>
+                                            <span className="flex items-center gap-1 text-slate-600">
+                                              {item.preOp.consent === 'available' ? <Icon name="check" className="w-3 h-3 text-emerald-600"/> : item.preOp.consent === 'pending' ? <Icon name="clock" className="w-3 h-3 text-amber-500"/> : <Icon name="cross" className="w-3 h-3 text-red-500"/>}
+                                              <span className="underline decoration-amber-400">Consent</span>
+                                            </span>
+                                          </div>
+                                          {/* PAC Status Line */}
+                                          <div className={`mt-1 text-[11px] font-medium flex items-center gap-1 ${item.preOp.pacType === 'success' ? 'text-emerald-600' : item.preOp.pacType === 'danger' ? 'text-red-600' : item.preOp.pacType === 'alert' ? 'text-amber-700 underline' : 'text-amber-600'}`}>
+                                            {item.preOp.pacType === 'success' ? <Icon name="check" className="w-3 h-3"/> : item.preOp.pacType === 'danger' ? <Icon name="cross" className="w-3 h-3"/> : item.preOp.pacType === 'alert' ? <Icon name="alert" className="w-3 h-3"/> : <Icon name="clock" className="w-3 h-3"/>}
+                                            <span>{item.preOp.pacText}</span>
+                                          </div>
+                                        </div>
+                                      </td>
+
+                                      {/* Clinical Indicators */}
+                                      <td className="py-3 px-4 relative">
+                                        <div 
+                                          onClick={() => setActiveClinicalIndicatorPopover(activeClinicalIndicatorPopover === item.id ? null : item.id)}
+                                          className="cursor-pointer group"
+                                        >
+                                          <div className="text-red-600 font-medium text-[11px] group-hover:underline">{item.indicators.text}</div>
+                                          <div className="flex items-center gap-1.5 mt-0.5">
+                                            <span className="text-amber-700 text-[11px] font-semibold">{item.indicators.sub}</span>
+                                            <span className="px-1.5 py-0.2 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold">+{item.indicators.count}</span>
+                                          </div>
+                                        </div>
+
+                                        {/* Clinical Indicators Popover */}
+                                        {activeClinicalIndicatorPopover === item.id && (
+                                          <div className="absolute left-4 top-12 w-64 bg-white border border-slate-200 rounded-xl shadow-2xl p-3 z-50 animate-in fade-in">
+                                            <div className="space-y-2 text-xs">
+                                              <div>
+                                                <span className="text-slate-400 text-[10px] uppercase font-bold block">Allergy</span>
+                                                <span className="text-red-600 font-semibold">Penicillin, Latex</span>
+                                              </div>
+                                              <div>
+                                                <span className="text-slate-400 text-[10px] uppercase font-bold block">Comorbidities</span>
+                                                <span className="text-slate-700">Hypertension • CAD</span>
+                                              </div>
+                                              <div>
+                                                <span className="text-slate-400 text-[10px] uppercase font-bold block">ASA & MET Score</span>
+                                                <span className="text-red-600 font-semibold">ASA IV • &lt; 4 METs</span>
+                                              </div>
+                                              <div>
+                                                <span className="text-slate-400 text-[10px] uppercase font-bold block">BMI</span>
+                                                <span className="text-amber-600 font-semibold">BMI 29.4</span>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </td>
+
+                                      {/* Patient Status */}
+                                      <td className="py-3 px-4 text-slate-700 font-medium">
+                                        {item.patientStatus}
+                                      </td>
+
+                                      {/* Request Date & Time */}
+                                      <td className="py-3 px-4">
+                                        <div className="text-slate-900 font-medium">{item.requestDate}</div>
+                                        <div className="text-slate-500 text-[11px]">{item.requestTime} • {item.timeAgo}</div>
+                                      </td>
+
+                                      {/* OR Status */}
+                                      <td className="py-3 px-4">
+                                        <span className="inline-block px-2.5 py-1 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                                          {item.orStatus}
+                                        </span>
+                                      </td>
+
+                                      {/* Actions */}
+                                      <td className="py-3 px-4 text-right">
+                                        <div className="flex items-center justify-end gap-2 relative">
+                                          <button 
+                                            onClick={() => setCurrentNav('schedule-or')}
+                                            className="px-3 py-1 border border-blue-600 text-blue-600 hover:bg-blue-50 rounded-lg text-xs font-semibold transition-colors"
+                                          >
+                                            Schedule
+                                          </button>
+                                          
+                                          {/* Row 3-Dots Action Popover */}
+                                          <button 
+                                            onClick={() => setRowActionMenuId(rowActionMenuId === item.id ? null : item.id)}
+                                            className="p-1 hover:bg-slate-100 rounded text-slate-500"
+                                          >
+                                            <Icon name="more-vertical" className="w-4 h-4"/>
+                                          </button>
+
+                                          {rowActionMenuId === item.id && (
+                                            <div className="absolute right-0 top-8 w-28 bg-white border border-slate-200 rounded-lg shadow-xl p-1 z-50 animate-in fade-in">
+                                              <button 
+                                                onClick={() => { setCurrentNav('create-request'); setRowActionMenuId(null); }}
+                                                className="w-full text-left px-2.5 py-1.5 text-xs text-slate-700 hover:bg-slate-100 rounded flex items-center gap-2"
+                                              >
+                                                <Icon name="pencil" className="w-3.5 h-3.5"/> Modify
+                                              </button>
+                                              <button 
+                                                onClick={() => { setSelectedCancelCase(item); setIsCancelModalOpen(true); setRowActionMenuId(null); }}
+                                                className="w-full text-left px-2.5 py-1.5 text-xs text-red-600 hover:bg-red-50 rounded flex items-center gap-2"
+                                              >
+                                                <Icon name="cross" className="w-3.5 h-3.5"/> Cancel
+                                              </button>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </td>
+                                    </tr>
+                              ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ===================== TAB 2: SCHEDULED SURGERY TABLE ===================== */}
+                  {activeTab === 'scheduled' && (
+                    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold select-none">
+                            <tr>
+                              <th className="py-3 px-3 w-12 text-center"></th>
+                              <th className="py-3 px-4">
+                                <div className="flex items-center gap-1.5">
+                                  <Icon name="arrow-up-down" className="w-3 h-3 text-slate-400" />
+                                  <span>OR No:</span>
+                                </div>
+                              </th>
+                              <th className="py-3 px-4">Patient</th>
+                              <th className="py-3 px-4">Surgeon</th>
+                              <th className="py-3 px-4">Surgery/Department</th>
+                              <th className="py-3 px-4">Surgery Date & Time</th>
+                              <th className="py-3 px-4">Pre-Op Clearance</th>
+                              <th className="py-3 px-4">Clinical indicators</th>
+                              <th className="py-3 px-4">Patient Status</th>
+                              <th className="py-3 px-4">OR Status</th>
+                              <th className="py-3 px-4 text-right">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 text-slate-700">
+                            {scheduled.map(item => {
+                              const isExpanded = expandedScheduledId === item.id;
+                              return (
+                                <React.Fragment key={item.id}>
+                                  <tr className={`hover:bg-slate-50/80 transition-colors ${isExpanded ? 'bg-slate-50/50' : ''}`}>
+                                    <td className="py-3 px-3 w-12 text-center align-middle">
+                                      <button 
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          toggleScheduledExpand(item.id);
+                                        }}
+                                        className="w-8 h-8 inline-flex items-center justify-center rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+                                        title={isExpanded ? "Collapse details" : "Expand details"}
+                                        aria-expanded={isExpanded}
+                                        aria-label={isExpanded ? "Collapse details" : "Expand details"}
+                                      >
+                                        <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180 text-[#1677FF]' : 'text-slate-500'}`}/>
+                                      </button>
+                                    </td>
+                                    <td className="py-3 px-4">
+                                      <div className="flex items-center gap-2">
+                                        <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${item.priority === 'Emergency' ? 'bg-red-500' : item.priority === 'Urgent' ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
+                                        <span className="font-bold text-slate-900">{item.orNo}</span>
+                                      </div>
+                                    </td>
+                                    <td className="py-3 px-4">
+                                      <div className="font-semibold text-slate-900">{item.patientName} ({item.gender} / {item.age}) {item.dob}</div>
+                                      <div className="text-slate-500 text-[11px]">{item.mrn} • {item.bloodGroup}</div>
+                                    </td>
+                                    <td className="py-3 px-4 font-medium text-slate-800">{item.surgeon}</td>
+                                    <td className="py-3 px-4">
+                                      <div className="font-semibold text-slate-900">{item.surgeryName}</div>
+                                      <div className="text-slate-500 text-[11px]">{item.department}</div>
+                                    </td>
+                                    <td className="py-3 px-4">
+                                      <div className="font-medium text-slate-900">{item.surgeryDateTime}</div>
+                                      <div className="text-slate-500 text-[11px]">{item.surgeryTime}</div>
+                                    </td>
+                                    <td className="py-3 px-4">
+                                      <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px]">
+                                        {(['financial', 'crossmatch', 'clinical', 'consent'] as const).map((key) => {
+                                          const status = (item.preOp as any)?.[key];
+                                          const isAvailable = status === 'available';
+                                          const label = key.charAt(0).toUpperCase() + key.slice(1);
+                                          return (
+                                            <span 
+                                              key={key} 
+                                              onClick={(e) => { e.stopPropagation(); setSelectedPreOpPatient(item as any); setIsPreOpModalOpen(true); }}
+                                              className={`flex items-center gap-1 cursor-pointer hover:underline ${isAvailable ? 'text-slate-600' : 'text-amber-600'}`}
+                                            >
+                                              <Icon name={isAvailable ? 'check' : 'clock'} className={`w-3 h-3 shrink-0 ${isAvailable ? 'text-emerald-600' : 'text-amber-500'}`}/>
+                                              <span>{label}</span>
+                                            </span>
+                                          );
+                                        })}
+                                      </div>
+                                      <div className={`mt-1 text-[11px] font-medium flex items-center gap-1 ${item.preOp?.pacType === 'warning' ? 'text-amber-600' : 'text-emerald-600'}`}>
+                                        <Icon name={item.preOp?.pacType === 'warning' ? 'clock' : 'check'} className="w-3 h-3 shrink-0"/> 
+                                        <span>{item.preOp?.pacText}</span>
+                                      </div>
+                                    </td>
+                                    <td className="py-3 px-4">
+                                      <div className="text-red-600 font-medium text-[11px]">{item.indicators.text}</div>
+                                      <div className="flex items-center gap-1.5 mt-0.5">
+                                        <span className="text-amber-700 text-[11px] font-semibold">{item.indicators.sub}</span>
+                                        <span className="px-1.5 py-0.2 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold">+{item.indicators.count}</span>
+                                      </div>
+                                    </td>
+                                    <td className="py-3 px-4 font-medium">{item.patientStatus}</td>
+                                    <td className="py-3 px-4">
+                                      <span className="inline-block px-2.5 py-1 rounded-full text-[11px] font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+                                        {item.orStatus}
+                                      </span>
+                                    </td>
+                                    <td className="py-3 px-4 text-right">
+                                      <div className="flex items-center justify-end gap-2">
+                                        <button 
+                                          onClick={(e) => { e.stopPropagation(); setCurrentNav('schedule-or'); }}
+                                          className="px-3 py-1 border border-[#1677FF] text-[#1677FF] hover:bg-blue-50 rounded-lg text-xs font-semibold"
+                                        >
+                                          Modify
+                                        </button>
+                                        <button 
+                                          onClick={(e) => { e.stopPropagation(); setRowActionMenuId(rowActionMenuId === item.id ? null : item.id); }}
+                                          className="p-1 hover:bg-slate-100 rounded text-slate-500"
+                                        >
+                                          <Icon name="more-vertical" className="w-4 h-4"/>
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+
+                                  {/* Expanded Details Row */}
+                                  {isExpanded && (
+                                    <tr className="bg-slate-50/60 border-b border-slate-200">
+                                      <td colSpan={11} className="px-5 py-4">
+                                        <div className="bg-[#F8FAFC] border border-slate-200/90 rounded-2xl p-4 shadow-2xs space-y-3">
+                                          {/* Header bar of expanded section */}
+                                          <div className="flex items-center justify-between flex-wrap gap-2">
+                                            <div className="flex items-center gap-3">
+                                              <h3 className="text-sm font-bold text-slate-900">Surgery Details</h3>
+                                              <div className="flex items-center gap-1.5 px-3 py-0.5 rounded-full border border-slate-200 bg-white text-xs text-slate-600 font-medium">
+                                                <Icon name="clock" className="w-3.5 h-3.5 text-slate-400"/>
+                                                <span>End time : {item.endTime || '16:00'}</span>
+                                              </div>
+                                              <button 
+                                                type="button"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setSelectedTeamCase(item);
+                                                  setIsTeamDrawerOpen(true);
+                                                }}
+                                                className="text-xs font-semibold text-[#1677FF] hover:underline cursor-pointer"
+                                              >
+                                                View All
+                                              </button>
+                                            </div>
+                                          </div>
+
+                                          {/* 3 Cards Grid */}
+                                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            {/* Card 1: Surgery Profile */}
+                                            <div className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-2xs">
+                                              <h4 className="text-xs font-bold text-slate-900 mb-3">Surgery Profile</h4>
+                                              <div className="space-y-2.5 text-xs">
+                                                <div className="flex items-center justify-between">
+                                                  <span className="text-slate-500 font-normal">OT</span>
+                                                  <span className="font-semibold text-slate-900">{item.surgeryProfile?.ot || item.scheduledOT || 'OT 3'}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                  <span className="text-slate-500 font-normal">Date & Time</span>
+                                                  <span className="font-semibold text-slate-900">{item.surgeryProfile?.dateTime || '29 Oct 2025, 14:30'}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                  <span className="text-slate-500 font-normal">Duration</span>
+                                                  <span className="font-semibold text-slate-900">{item.surgeryProfile?.duration || '1h 30mins'}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                  <span className="text-slate-500 font-normal">Diagnosis</span>
+                                                  <span className="font-semibold text-slate-900">{item.surgeryProfile?.diagnosis || 'Cataract | Left Eye'}</span>
+                                                </div>
+                                              </div>
+                                            </div>
+
+                                            {/* Card 2: Surgical Team */}
+                                            <div className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-2xs">
+                                              <h4 className="text-xs font-bold text-slate-900 mb-3">Surgical Team</h4>
+                                              <div className="space-y-2.5 text-xs">
+                                                <div className="flex items-center justify-between">
+                                                  <span className="text-slate-500 font-normal">Assistant Surgeon</span>
+                                                  <span className="font-semibold text-slate-900">{item.surgicalTeam?.assistantSurgeon || 'Dr. Rahul Kumar'}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                  <span className="text-slate-500 font-normal">Anaesthetist</span>
+                                                  <span className="font-semibold text-slate-900">{item.surgicalTeam?.anaesthetist || 'Kumar Ravikant'}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                  <span className="text-slate-500 font-normal">Scrub Nurse</span>
+                                                  <span className="font-semibold text-slate-900">{item.surgicalTeam?.scrubNurse || 'Sharon DS'}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                  <span className="text-slate-500 font-normal">Floor Nurse</span>
+                                                  <span className="font-semibold text-slate-900">{item.surgicalTeam?.floorNurse || 'Krishna Kumar'}</span>
+                                                </div>
+                                              </div>
+                                            </div>
+
+                                            {/* Card 3: Blood & Devices */}
+                                            <div className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-2xs">
+                                              <h4 className="text-xs font-bold text-slate-900 mb-3">Blood & Devices</h4>
+                                              <div className="space-y-2.5 text-xs">
+                                                <div className="flex items-center justify-between gap-2">
+                                                  <span className="text-slate-500 font-normal shrink-0">Surgical Instruments (3)</span>
+                                                  <span className="font-semibold text-slate-900 text-right truncate" title={item.bloodDevices?.instruments}>{item.bloodDevices?.instruments || 'Sternotomy Set, Sternal Saw...'}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between gap-2">
+                                                  <span className="text-slate-500 font-normal shrink-0">Implants & Consumables (2)</span>
+                                                  <span className="font-semibold text-slate-900 text-right truncate" title={item.bloodDevices?.implants}>{item.bloodDevices?.implants || 'Prosthetic Heart Valves, Grafts'}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between gap-2">
+                                                  <span className="text-slate-500 font-normal shrink-0">Blood (4)</span>
+                                                  <span className="font-semibold text-slate-900 text-right truncate" title={item.bloodDevices?.blood}>{item.bloodDevices?.blood || 'CRYO POOR PLASMA, RED CELLS'}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between gap-2">
+                                                  <span className="text-slate-500 font-normal shrink-0">Miscellaneous (4)</span>
+                                                  <span className="font-semibold text-slate-900 text-right truncate" title={item.bloodDevices?.misc}>{item.bloodDevices?.misc || 'Trolley, Drapes, Lights, UPS'}</span>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  )}
+                                </React.Fragment>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ===================== TAB 3: OR OVERVIEW (DAY, WEEK, MONTH) ===================== */}
+                  {activeTab === 'overview' && (
+                    <div className="space-y-4">
+                      {/* --- SUBVIEW: DAY TIMELINE GRID (05:00 to 00:00) --- */}
+                      {overviewMode === 'day' && (
+                        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm relative">
+                          <div className="overflow-x-auto">
+                            <div className="min-w-[1400px]">
+                              
+                              {/* Hours Header (05:00 to 00:00) */}
+                              <div className="flex border-b border-slate-200 bg-slate-50 text-[11px] font-semibold text-slate-500 select-none">
+                                <div className="w-24 shrink-0 py-2.5 px-3 border-r border-slate-200 bg-slate-100">OT Room</div>
+                                {['05:00', '06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00', '00:00'].map(hour => (
+                                  <div key={hour} className="flex-1 py-2.5 text-center border-r border-slate-200/60 last:border-r-0">
+                                    {hour}
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* OT Rooms Rows (OT-1 to OT-11) */}
+                              <div className="relative divide-y divide-slate-100">
+                                
+                                {/* Yellow Current Time Indicator (12:30) */}
+                                <div className="absolute top-0 bottom-0 left-[41.5%] w-0.5 bg-amber-400 z-20 pointer-events-none flex flex-col items-center">
+                                  <div className="w-2 h-2 rounded-full bg-amber-500 -mt-1"></div>
+                                </div>
+
+                                {/* OT-1 */}
+                                <div className="flex h-16 relative">
+                                  <div className="w-24 shrink-0 p-3 font-bold text-slate-800 text-xs border-r border-slate-200 bg-slate-50 flex items-center">OT - 1</div>
+                                  <div className="flex-1 relative">
+                                    {/* Surgery 1: Open Heart (Completed) */}
+                                    <div 
+                                      onClick={() => setSelectedDaySurgeryPopover({ title: 'Open Heart Surgery', ot: 'OT 1', time: 'Mon 01/11/2025 • 12 PM - 1 PM', doctor: 'Dr. Devi Prasad Shetty', patient: 'Anita S (F / 52) • O+ • 17540000857085' })}
+                                      className="absolute left-[3%] w-[12%] top-2 bottom-2 bg-emerald-50 border border-emerald-300 rounded-lg p-2 text-xs cursor-pointer hover:shadow-md transition-shadow flex items-center justify-between"
+                                    >
+                                      <div className="truncate">
+                                        <div className="font-bold text-emerald-900 text-[11px] truncate">Open Heart Surgery</div>
+                                        <div className="text-[10px] text-emerald-700 truncate">Dr. Devi Prasad Shetty</div>
+                                      </div>
+                                      <span className="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0 text-[10px]">✓</span>
+                                    </div>
+
+                                    {/* Surgery 2: Liver Transplant (In Progress) */}
+                                    <div 
+                                      onClick={() => setSelectedDaySurgeryPopover({ title: 'Liver Transplant', ot: 'OT 1', time: 'Mon 01/11/2025 • 12:00 PM - 02:30 PM', doctor: 'Dr. Neha Singh', patient: 'Rajesh K (M / 29) • O+ • 17650000967215' })}
+                                      className="absolute left-[37%] w-[14%] top-2 bottom-2 bg-amber-50 border border-amber-300 rounded-lg p-2 text-xs cursor-pointer hover:shadow-md transition-shadow flex items-center justify-between"
+                                    >
+                                      <div className="truncate">
+                                        <div className="font-bold text-amber-900 text-[11px] truncate">Liver Transplant</div>
+                                        <div className="text-[10px] text-amber-700 truncate">Dr. Neha Singh</div>
+                                      </div>
+                                      <span className="text-amber-600 text-xs font-bold">⌛</span>
+                                    </div>
+
+                                    {/* Surgery 3: Lap Cholecystectomy (Scheduled) */}
+                                    <div className="absolute left-[78%] w-[12%] top-2 bottom-2 bg-white border border-purple-300 rounded-lg p-2 text-xs shadow-sm flex items-center justify-between">
+                                      <div className="truncate">
+                                        <div className="font-bold text-purple-900 text-[11px] truncate">Lap Cholecystectomy</div>
+                                        <div className="text-[10px] text-purple-700 truncate">Dr. Priya Nambiar</div>
+                                      </div>
+                                      <span className="w-4 h-4 rounded bg-purple-100 text-purple-700 flex items-center justify-center shrink-0 text-[10px]">📅</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* OT-2 */}
+                                <div className="flex h-16 relative">
+                                  <div className="w-24 shrink-0 p-3 font-bold text-slate-800 text-xs border-r border-slate-200 bg-slate-50 flex items-center">OT - 2</div>
+                                  <div className="flex-1 relative">
+                                    <div className="absolute left-[18%] w-[18%] top-2 bottom-2 bg-emerald-50 border border-emerald-300 rounded-lg p-2 text-xs flex items-center justify-between">
+                                      <div className="truncate">
+                                        <div className="font-bold text-emerald-900 text-[11px]">Liver Transplant</div>
+                                        <div className="text-[10px] text-emerald-700">Dr. Vikram Prajapati</div>
+                                      </div>
+                                      <span className="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px]">✓</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* OT-3 */}
+                                <div className="flex h-16 relative">
+                                  <div className="w-24 shrink-0 p-3 font-bold text-slate-800 text-xs border-r border-slate-200 bg-slate-50 flex items-center">OT - 3</div>
+                                  <div className="flex-1 relative">
+                                    <div className="absolute left-[42%] w-[12%] top-2 bottom-2 bg-white border border-purple-300 rounded-lg p-2 text-xs shadow-sm flex items-center justify-between">
+                                      <div className="truncate">
+                                        <div className="font-bold text-purple-900 text-[11px]">Cataract Surgery</div>
+                                        <div className="text-[10px] text-purple-700">Dr. Neha Singh</div>
+                                      </div>
+                                      <span className="w-4 h-4 rounded bg-purple-100 text-purple-700 flex items-center justify-center text-[10px]">📅</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* OT-4 */}
+                                <div className="flex h-16 relative">
+                                  <div className="w-24 shrink-0 p-3 font-bold text-slate-800 text-xs border-r border-slate-200 bg-slate-50 flex items-center">OT - 4</div>
+                                  <div className="flex-1 relative">
+                                    <div className="absolute left-[80%] w-[12%] top-2 bottom-2 bg-white border border-red-300 rounded-lg p-2 text-xs shadow-sm flex items-center justify-between">
+                                      <div className="truncate">
+                                        <div className="font-bold text-red-900 text-[11px]">Cataract Surgery</div>
+                                        <div className="text-[10px] text-red-700">Dr. Neha Singh</div>
+                                      </div>
+                                      <span className="w-4 h-4 rounded-full bg-red-600 text-white flex items-center justify-center text-[10px]">✕</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* OT-5 */}
+                                <div className="flex h-16 relative">
+                                  <div className="w-24 shrink-0 p-3 font-bold text-slate-800 text-xs border-r border-slate-200 bg-slate-50 flex items-center">OT - 5</div>
+                                  <div className="flex-1 relative">
+                                    <div className="absolute left-[3%] w-[14%] top-2 bottom-2 bg-emerald-50 border border-emerald-300 rounded-lg p-2 text-xs flex items-center justify-between">
+                                      <div className="truncate">
+                                        <div className="font-bold text-emerald-900 text-[11px]">Liver Transplant</div>
+                                        <div className="text-[10px] text-emerald-700">Dr. Vikram Prajapati</div>
+                                      </div>
+                                      <span className="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px]">✓</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* OT-6 */}
+                                <div className="flex h-16 relative">
+                                  <div className="w-24 shrink-0 p-3 font-bold text-slate-800 text-xs border-r border-slate-200 bg-slate-50 flex items-center">OT - 6</div>
+                                  <div className="flex-1 relative">
+                                    <div className="absolute left-[68%] w-[11%] top-2 bottom-2 bg-white border border-red-300 rounded-lg p-2 text-xs shadow-sm flex items-center justify-between">
+                                      <div className="truncate">
+                                        <div className="font-bold text-red-900 text-[11px]">Spine Fusion</div>
+                                        <div className="text-[10px] text-red-700">Dr. Neha Singh</div>
+                                      </div>
+                                      <span className="w-4 h-4 rounded-full bg-red-600 text-white flex items-center justify-center text-[10px]">✕</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* OT-7 */}
+                                <div className="flex h-16 relative">
+                                  <div className="w-24 shrink-0 p-3 font-bold text-slate-800 text-xs border-r border-slate-200 bg-slate-50 flex items-center">OT - 7</div>
+                                  <div className="flex-1 relative">
+                                    <div className="absolute left-[42%] w-[12%] top-2 bottom-2 bg-white border border-blue-300 rounded-lg p-2 text-xs shadow-sm flex items-center justify-between">
+                                      <div className="truncate">
+                                        <div className="font-bold text-blue-900 text-[11px]">Cataract Surgery</div>
+                                        <div className="text-[10px] text-blue-700">Dr. Rohan Verma</div>
+                                      </div>
+                                      <span className="w-4 h-4 rounded bg-blue-100 text-blue-700 flex items-center justify-center text-[10px]">📅</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* OT-8 */}
+                                <div className="flex h-16 relative">
+                                  <div className="w-24 shrink-0 p-3 font-bold text-slate-800 text-xs border-r border-slate-200 bg-slate-50 flex items-center">OT - 8</div>
+                                  <div className="flex-1 relative">
+                                    <div className="absolute left-[13%] w-[12%] top-2 bottom-2 bg-emerald-50 border border-emerald-300 rounded-lg p-2 text-xs flex items-center justify-between">
+                                      <div className="truncate">
+                                        <div className="font-bold text-emerald-900 text-[11px]">Appendectomy</div>
+                                        <div className="text-[10px] text-emerald-700">Dr. R. Shah</div>
+                                      </div>
+                                      <span className="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px]">✓</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* OT-10 with Maintenance Block */}
+                                <div className="flex h-16 relative">
+                                  <div className="w-24 shrink-0 p-3 font-bold text-slate-800 text-xs border-r border-slate-200 bg-slate-50 flex items-center">OT - 10</div>
+                                  <div className="flex-1 relative">
+                                    {/* Surgery */}
+                                    <div className="absolute left-[28%] w-[14%] top-2 bottom-2 bg-amber-50 border border-amber-300 rounded-lg p-2 text-xs flex items-center justify-between">
+                                      <div className="truncate">
+                                        <div className="font-bold text-amber-900 text-[11px]">Cataract Surgery</div>
+                                        <div className="text-[10px] text-amber-700">Dr. Neha Singh</div>
+                                      </div>
+                                      <span className="text-amber-600 text-xs">⌛</span>
+                                    </div>
+
+                                    {/* Maintenance Block */}
+                                    <div 
+                                      onClick={() => setSelectedUnavailablePopover({ ot: 'OT 10', time: 'Mon 01/11/2025 • 00:05 PM - 12:00 PM', reason: 'Under Maintenance' })}
+                                      className="absolute left-[45%] w-[45%] top-2 bottom-2 striped-maintenance border border-slate-300 rounded-lg p-2 text-xs cursor-pointer flex items-center gap-2"
+                                    >
+                                      <span className="w-4 h-4 rounded-full bg-slate-400 text-white flex items-center justify-center text-[10px]">🚫</span>
+                                      <span className="font-semibold text-slate-700 text-[11px]">Under Maintenance</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* --- SUBVIEW: WEEK CALENDAR --- */}
+                      {overviewMode === 'week' && (
+                        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                          <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 divide-x divide-slate-200">
+                            <div className="p-3 text-sky-700 bg-sky-50 font-bold">30 Monday</div>
+                            <div className="p-3">01 Tuesday</div>
+                            <div className="p-3">02 Wednesday</div>
+                            <div className="p-3">03 Thursday</div>
+                            <div className="p-3">04 Friday</div>
+                            <div className="p-3">05 Saturday</div>
+                            <div className="p-3">06 Sunday</div>
+                          </div>
+                          <div className="divide-y divide-slate-100">
+                            {['OT - 1', 'OT - 2', 'OT - 3', 'OT - 4', 'OT - 5', 'OT - 6'].map((room, idx) => (
+                              <div key={room} className="grid grid-cols-7 divide-x divide-slate-100 min-h-[90px] text-xs">
+                                <div className="p-2 space-y-1.5 bg-slate-50/40">
+                                  <span className="font-bold text-[11px] text-slate-500 block mb-1">{room}</span>
+                                  <div className="bg-emerald-50 border border-emerald-200 p-1.5 rounded text-[11px] font-semibold text-emerald-900 flex justify-between items-center">
+                                    <span>12:30 • Open Heart</span>
+                                    <span>✓</span>
+                                  </div>
+                                  {idx === 0 && (
+                                    <div className="bg-sky-100 text-sky-800 text-[10px] font-bold text-center py-0.5 rounded">
+                                      +5 more
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="p-2 space-y-1.5">
+                                  {idx % 2 === 1 && (
+                                    <div className="bg-purple-50 border border-purple-200 p-1.5 rounded text-[11px] font-medium text-purple-900">
+                                      12:30 • Laparoscopic
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="p-2 space-y-1.5">
+                                  {idx === 2 && (
+                                    <div className="bg-amber-50 border border-amber-200 p-2 rounded text-[11px]">
+                                      <div className="text-[10px] text-slate-500">09:00 - 11:00</div>
+                                      <div className="font-bold text-amber-900">Open Heart Surgery</div>
+                                      <div className="text-amber-700 text-[10px]">Dr. Devi Prasad Shetty</div>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="p-2"></div>
+                                <div className="p-2">
+                                  {idx === 4 && (
+                                    <div className="striped-maintenance border border-slate-300 p-2 rounded text-slate-700 text-[10px] font-semibold">
+                                      09:00 - 11:00 Under Maintenance
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="p-2"></div>
+                                <div className="p-2"></div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* --- SUBVIEW: MONTH CALENDAR --- */}
+                      {overviewMode === 'month' && (
+                        <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                          <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 divide-x divide-slate-200">
+                            {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(d => (
+                              <div key={d} className="p-2.5 text-center">{d}</div>
+                            ))}
+                          </div>
+                          <div className="grid grid-cols-7 divide-x divide-y divide-slate-100 text-xs">
+                            {[30, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 1, 2, 3, 4].map((day, idx) => (
+                              <div key={idx} className="min-h-[110px] p-2 flex flex-col justify-between hover:bg-slate-50 transition-colors">
+                                <div className="flex justify-between items-center">
+                                  <span className={`font-bold text-xs ${idx < 1 || idx > 30 ? 'text-slate-400' : 'text-slate-800'}`}>{day}</span>
+                                </div>
+                                {idx < 6 && (
+                                  <div className="space-y-1 my-1 text-[11px]">
+                                    <div className="flex justify-between text-slate-600"><span>OR 2</span><span className="font-semibold text-slate-800">{idx + 2} Surgeries</span></div>
+                                    <div className="flex justify-between text-slate-600"><span>OR 3</span><span className="font-semibold text-slate-800">9 Surgeries</span></div>
+                                    <div className="flex justify-between text-slate-600"><span>OR 4</span><span className="font-semibold text-slate-800">9 Surgeries</span></div>
+                                  </div>
+                                )}
+                                {idx < 6 && (
+                                  <button 
+                                    onClick={() => {
+                                      setSelectedDayProcedures([
+                                        { time: '07:00 AM - 08:30 AM', room: 'OR 2', status: 'Completed', surgery: 'Liver Transplant', doc: 'Dr. Vikram Prajapati' },
+                                        { time: '07:00 AM - 08:30 AM', room: 'OR 2', status: 'Ongoing', surgery: 'Lumbar Spinal Fusion', doc: 'Dr. Vikram Prajapati' },
+                                        { time: '07:00 AM - 08:30 AM', room: 'OR 3', status: 'Ongoing', surgery: 'Laparoscopic Cholecystectomy', doc: 'Dr. Vikram Prajapati' },
+                                        { time: '07:00 AM - 08:30 AM', room: 'OR 3', status: 'Scheduled', surgery: 'Coronary Artery Bypass Graft', doc: 'Dr. Vikram Prajapati' },
+                                        { time: '07:00 AM - 08:30 AM', room: 'OR 3', status: 'Scheduled', surgery: 'Total Knee Replacement', doc: 'Dr. Vikram Prajapati' }
+                                      ]);
+                                      setIsDayDrawerOpen(true);
+                                    }}
+                                    className="w-full text-center py-1 bg-sky-50 text-sky-700 hover:bg-sky-100 rounded text-[11px] font-bold"
+                                  >
+                                    More
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ===================== VIEW 2: CREATE NEW REQUEST (SPLIT LAYOUT) ===================== */}
+              {currentNav === 'create-request' && (
+                <div className="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  
+                  {/* Left Form (7 Cols) */}
+                  <div className="lg:col-span-8 bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+                    <div className="pb-4 border-b border-slate-100 mb-6 flex items-center justify-between">
+                      <h2 className="text-lg font-bold text-slate-900">Patient Details*</h2>
+                      <button onClick={() => setCurrentNav('manager')} className="text-slate-400 hover:text-slate-600">
+                        <Icon name="cross" className="w-5 h-5"/>
+                      </button>
+                    </div>
+
+                    <div className="space-y-5">
+                      {/* Surgery Priority Radio Group */}
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-2">Surgery priority</label>
+                        <div className="flex items-center gap-6 text-xs font-medium">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="priority" defaultChecked className="text-blue-600"/>
+                            <span>Elective</span>
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="priority" className="text-blue-600"/>
+                            <span>Urgent</span>
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="priority" className="text-blue-600"/>
+                            <span>Emergency</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Patient Name & Blood Group */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">Patient Name *</label>
+                          <input type="text" defaultValue="Raghunathan" className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"/>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">Blood Group</label>
+                          <input type="text" defaultValue="O+" className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"/>
+                        </div>
+                      </div>
+
+                      {/* Allergies & Co-Morbidities */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">Allergies</label>
+                          <input type="text" defaultValue="Dust Allergy" className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"/>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">Co-Morbidities</label>
+                          <input type="text" defaultValue="Diabetes, Hypertension" className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"/>
+                        </div>
+                      </div>
+
+                      {/* Clinical Scores & Select OT */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">Clinical Scores/Tags</label>
+                          <input type="text" defaultValue="ASA Score II" className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"/>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">Select OT</label>
+                          <select defaultValue="OT-3" className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="OT-1">OT-1</option>
+                            <option value="OT-2">OT-2</option>
+                            <option value="OT-3">OT-3</option>
+                            <option value="OT-4">OT-4</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Surgery & Surgeon */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">Surgery *</label>
+                          <input type="text" defaultValue="Open Heart Surgery" className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"/>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">Surgeon *</label>
+                          <input type="text" defaultValue="Devi Prasad Shetty" className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"/>
+                        </div>
+                      </div>
+
+                      {/* Date & Duration */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">Surgery Date & Time *</label>
+                          <div className="relative">
+                            <input type="text" defaultValue="12-09-2026" className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"/>
+                            <Icon name="calendar" className="w-4 h-4 text-slate-400 absolute right-3 top-2.5 pointer-events-none"/>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-700 mb-1">Surgery Duration *</label>
+                          <div className="flex items-center gap-2">
+                            <input type="text" defaultValue="1hr" className="w-20 px-3 py-2 text-xs border border-slate-300 rounded-lg outline-none"/>
+                            <button className="w-8 h-8 rounded-full border border-blue-600 text-blue-600 font-bold flex items-center justify-center hover:bg-blue-50">+</button>
+                            <select defaultValue="30" className="flex-1 px-3 py-2 text-xs border border-slate-300 rounded-lg outline-none">
+                              <option value="15">15 Min</option>
+                              <option value="30">30 Min</option>
+                              <option value="45">45 Min</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
+                        <button 
+                          onClick={() => setCurrentNav('manager')}
+                          className="px-5 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button 
+                          onClick={() => setIsSchedulePromptOpen(true)}
+                          className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-colors"
+                        >
+                          Submit
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Live OT Schedule Preview (5 Cols) */}
+                  <div className="lg:col-span-4 bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                      <span className="font-bold text-xs text-slate-800">Schedule Preview</span>
+                      <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-600">
+                        <Icon name="chevron-left" className="w-3.5 h-3.5 cursor-pointer"/>
+                        <span className="font-semibold text-slate-800">08 Aug 2026</span>
+                        <Icon name="chevron-right" className="w-3.5 h-3.5 cursor-pointer"/>
+                      </div>
+                    </div>
+
+                    {/* Timeline items list */}
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-3">
+                        <span className="text-xs font-bold text-slate-400 w-12 pt-1">08 AM</span>
+                        <div className="flex-1 bg-emerald-50 border border-emerald-300 rounded-lg p-2.5 text-xs flex justify-between items-center">
+                          <div>
+                            <div className="font-bold text-emerald-900">Open Heart Surgery</div>
+                            <div className="text-[11px] text-emerald-700">Dr. Devi Prasad Shetty</div>
+                          </div>
+                          <span className="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px]">✓</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start gap-3">
+                        <span className="text-xs font-bold text-slate-400 w-12 pt-1">09 AM</span>
+                        <div className="flex-1 bg-amber-50 border border-amber-300 rounded-lg p-2.5 text-xs flex justify-between items-center">
+                          <div>
+                            <div className="font-bold text-amber-900">Liver Transplant</div>
+                            <div className="text-[11px] text-amber-700">Dr. Neha Singh</div>
+                          </div>
+                          <span className="text-amber-600 text-xs font-bold">⌛</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start gap-3">
+                        <span className="text-xs font-bold text-slate-400 w-12 pt-1">11 AM</span>
+                        <div className="flex-1 striped-maintenance border border-slate-300 rounded-lg p-3 text-xs flex items-center gap-2">
+                          <span className="w-4 h-4 rounded-full bg-slate-400 text-white flex items-center justify-center text-[10px]">🚫</span>
+                          <span className="font-bold text-slate-700">Under Maintenance</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ===================== VIEW 3: SCHEDULE OR FORM ===================== */}
+              {currentNav === 'schedule-or' && (
+                <div className="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+                  
+                  {/* Left Comprehensive Form (8 Cols) */}
+                  <div className="lg:col-span-8 space-y-6">
+                    
+                    {/* Patient Details Card */}
+                    <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm relative">
+                      <div className="flex justify-between items-center mb-4">
+                        <h3 className="font-bold text-slate-900 text-sm">Patient Details</h3>
+                        <button className="text-slate-400 hover:text-slate-700"><Icon name="pencil" className="w-4 h-4"/></button>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                        <div><span className="text-slate-400 block mb-0.5">OT Request ID</span><span className="font-bold text-slate-800">P-2804828</span></div>
+                        <div><span className="text-slate-400 block mb-0.5">Patient Details</span><span className="font-bold text-slate-800">Raghunathan P (M / 24)</span></div>
+                        <div><span className="text-slate-400 block mb-0.5">Blood Group</span><span className="font-bold text-slate-800">O+</span></div>
+                        <div><span className="text-slate-400 block mb-0.5">Priority</span><span className="font-bold text-emerald-600">Elective</span></div>
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-6 text-xs">
+                        <span className="text-slate-700 font-medium">Does this patient requires a Biopsy?</span>
+                        <label className="flex items-center gap-1.5 cursor-pointer"><input type="radio" name="biopsy" className="text-blue-600"/><span>Yes</span></label>
+                        <label className="flex items-center gap-1.5 cursor-pointer"><input type="radio" name="biopsy" defaultChecked className="text-blue-600"/><span>No</span></label>
+                      </div>
+                    </div>
+
+                    {/* Preferred Doctor Banner */}
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800 flex items-center gap-2">
+                      <Icon name="info" className="w-4 h-4 text-amber-600 shrink-0"/>
+                      <span>Showing preferred, human resources, and devices as per doctor and surgery preference & availability</span>
+                    </div>
+
+                    {/* Surgical Team Assignment */}
+                    <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
+                      <h3 className="font-bold text-slate-900 text-sm">Surgical Team</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                        <div>
+                          <label className="block text-slate-600 font-semibold mb-1">Assistant Surgeon</label>
+                          <input type="text" placeholder="Search Assistant Surgeon" className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none"/>
+                        </div>
+                        <div>
+                          <label className="block text-slate-600 font-semibold mb-1">Anaesthetist</label>
+                          <input type="text" placeholder="Search Anaesthetist" className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none"/>
+                        </div>
+                        <div>
+                          <label className="block text-slate-600 font-semibold mb-1">Scrub Nurse</label>
+                          <input type="text" placeholder="Search Scrub Nurse" className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none"/>
+                        </div>
+                        <div>
+                          <label className="block text-slate-600 font-semibold mb-1">Floor Nurse</label>
+                          <input type="text" placeholder="Search Floor Nurse" className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none"/>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Surgical Requirements & Equipment Tags */}
+                    <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-5">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-bold text-slate-900 text-sm">Surgical Requirements</h3>
+                        <button className="text-blue-600 font-bold text-sm">+</button>
+                      </div>
+
+                      {/* Surgical Instruments */}
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">Surgical Instruments</label>
+                        <div className="flex flex-wrap gap-2 p-2 border border-slate-300 rounded-lg">
+                          <span className="px-2.5 py-1 bg-sky-50 text-sky-700 border border-sky-200 rounded text-xs flex items-center gap-1 font-medium">Sternotomy Set 2 ✕</span>
+                          <span className="px-2.5 py-1 bg-sky-50 text-sky-700 border border-sky-200 rounded text-xs flex items-center gap-1 font-medium">Sternal Saw ✕</span>
+                          <span className="px-2.5 py-1 bg-sky-50 text-sky-700 border border-sky-200 rounded text-xs flex items-center gap-1 font-medium">Suture Materials ✕</span>
+                        </div>
+                      </div>
+
+                      {/* Devices with Conflict Alert Banner */}
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">Devices</label>
+                        <div className="flex flex-wrap gap-2 p-2 border border-slate-300 rounded-lg">
+                          <span className="px-2.5 py-1 bg-sky-50 text-sky-700 border border-sky-200 rounded text-xs flex items-center gap-1 font-medium">Sternotomy Set ✕</span>
+                          <span className="px-2.5 py-1 bg-red-50 text-red-700 border border-red-200 rounded text-xs flex items-center gap-1 font-semibold">Sternal Saw ✕</span>
+                          <span className="px-2.5 py-1 bg-sky-50 text-sky-700 border border-sky-200 rounded text-xs flex items-center gap-1 font-medium">Suture Materials 2 ✕</span>
+                        </div>
+                        {/* Red Conflict Banner */}
+                        <div className="mt-2 text-xs text-red-600 font-semibold flex items-center gap-1.5">
+                          <Icon name="info" className="w-3.5 h-3.5"/>
+                          <span>Sternal Saw is not available at 11:00 AM</span>
+                        </div>
+                      </div>
+
+                      {/* Notes Textarea */}
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">Notes</label>
+                        <textarea placeholder="Start typing.." rows="3" className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                      </div>
+
+                      {/* Form Actions */}
+                      <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                        <button onClick={() => setCurrentNav('manager')} className="px-5 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50">Cancel</button>
+                        <button onClick={() => { alert('Surgery scheduled successfully!'); setCurrentNav('manager'); setActiveTab('scheduled'); }} className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-sm">Submit</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Timeline Preview (4 Cols) */}
+                  <div className="lg:col-span-4 bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
+                    <span className="font-bold text-xs text-slate-800 block pb-2 border-b border-slate-100">Schedule Conflicts Viewer</span>
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-3">
+                        <span className="text-xs font-bold text-slate-400 w-12 pt-1">08 AM</span>
+                        <div className="flex-1 bg-emerald-50 border border-emerald-300 rounded-lg p-2.5 text-xs flex justify-between items-center">
+                          <div><div className="font-bold text-emerald-900">Open Heart Surgery</div><div className="text-[11px] text-emerald-700">Dr. Devi Prasad Shetty</div></div>
+                          <span className="w-4 h-4 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px]">✓</span>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <span className="text-xs font-bold text-slate-400 w-12 pt-1">11 AM</span>
+                        <div className="flex-1 striped-maintenance border border-slate-300 rounded-lg p-3 text-xs flex items-center gap-2">
+                          <span className="w-4 h-4 rounded-full bg-slate-400 text-white flex items-center justify-center text-[10px]">🚫</span>
+                          <span className="font-bold text-slate-700">Under Maintenance</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ===================== VIEW 4: OR LIVE MODULE ===================== */}
+              {currentNav === 'live' && (
+                <div className="max-w-[1600px] mx-auto flex flex-col gap-5">
+                  
+                  {/* Top 5 KPI Metric Cards + Real-Time Clock */}
+                  <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+                    <div className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-lg">🏥</div>
+                      <div><span className="text-[11px] text-slate-500 font-medium block">Total</span><span className="text-xl font-bold text-slate-900">20</span></div>
+                    </div>
+                    <div className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center"><Icon name="calendar" className="w-5 h-5"/></div>
+                      <div><span className="text-[11px] text-slate-500 font-medium block">Scheduled</span><span className="text-xl font-bold text-slate-900">18</span></div>
+                    </div>
+                    <div className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center font-bold">⌛</div>
+                      <div><span className="text-[11px] text-slate-500 font-medium block">In-Progress</span><span className="text-xl font-bold text-slate-900">8</span></div>
+                    </div>
+                    <div className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center"><Icon name="check" className="w-5 h-5"/></div>
+                      <div><span className="text-[11px] text-slate-500 font-medium block">Completed</span><span className="text-xl font-bold text-slate-900">10</span></div>
+                    </div>
+                    <div className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center"><Icon name="clipboard" className="w-5 h-5"/></div>
+                      <div><span className="text-[11px] text-slate-500 font-medium block">Upcoming</span><span className="text-xl font-bold text-slate-900">2</span></div>
+                    </div>
+
+                    {/* Clock Display Badge */}
+                    <div className="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm flex items-center justify-between">
+                      <div className="text-[11px] font-medium text-slate-500">Wednesday 17 December</div>
+                      <div className="px-3 py-1 rounded bg-slate-900 text-white font-mono font-bold text-xs">12:20 PM</div>
+                    </div>
+                  </div>
+
+                  {/* Sub-Tabs: Live Updates vs Action Center */}
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                    <div className="flex items-center gap-6">
+                      <button 
+                        onClick={() => setLiveSubTab('live-updates')}
+                        className={`text-sm font-semibold pb-2 -mb-2 transition-colors relative ${liveSubTab === 'live-updates' ? 'text-sky-600 border-b-2 border-sky-600' : 'text-slate-600 hover:text-slate-900'}`}
+                      >
+                        Live Updates
+                      </button>
+                      <button 
+                        onClick={() => setLiveSubTab('action-center')}
+                        className={`text-sm font-semibold pb-2 -mb-2 transition-colors relative ${liveSubTab === 'action-center' ? 'text-sky-600 border-b-2 border-sky-600' : 'text-slate-600 hover:text-slate-900'}`}
+                      >
+                        Action Center
+                      </button>
+                    </div>
+
+                    {/* Right View Switchers */}
+                    {liveSubTab === 'live-updates' && (
+                      <div className="flex items-center border border-slate-300 rounded-lg overflow-hidden bg-white">
+                        <button 
+                          onClick={() => setLiveViewMode('list')}
+                          className={`p-1.5 ${liveViewMode === 'list' ? 'bg-sky-50 text-sky-700' : 'text-slate-400 hover:text-slate-700'}`}
+                        >
+                          <Icon name="list" className="w-4 h-4"/>
+                        </button>
+                        <button 
+                          onClick={() => setLiveViewMode('kanban')}
+                          className={`p-1.5 border-l border-slate-200 ${liveViewMode === 'kanban' ? 'bg-sky-50 text-sky-700' : 'text-slate-400 hover:text-slate-700'}`}
+                        >
+                          <Icon name="kanban" className="w-4 h-4"/>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ===================== SUB-TAB: ACTION CENTER ===================== */}
+                  {liveSubTab === 'action-center' && (
+                    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold select-none">
+                            <tr>
+                              <th className="py-3 px-4">Tasks</th>
+                              <th className="py-3 px-4">OR</th>
+                              <th className="py-3 px-4">Surgery Details</th>
+                              <th className="py-3 px-4">Patient</th>
+                              <th className="py-3 px-4">Surgeon</th>
+                              <th className="py-3 px-4">Anaesthetist</th>
+                              <th className="py-3 px-4">Care Team</th>
+                              <th className="py-3 px-4">Current Status</th>
+                              <th className="py-3 px-4">Start Time</th>
+                              <th className="py-3 px-4">End Time</th>
+                              <th className="py-3 px-4">Pre-Op Clearance</th>
+                              <th className="py-3 px-4 text-right"></th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 text-slate-700">
+                            {[
+                              { or: 'OR - 2', specialty: 'General Surgery', surgery: 'Open Heart Surgery', patient: 'Rajesh K (M / 29) 05/11/1994', mrn: '17650000967215 • O+', surgeon: 'Dr. Maya Patel', anaes: 'Dr. Daniel Wong', status: 'Patient Positioning', start: '13:45', end: '13:45, 30mins delay', delayed: true, tasks: '5/30' },
+                              { or: 'OR - 3', specialty: 'Ophthalmology', surgery: 'Open Heart Surgery', patient: 'Rajesh K (M / 29) 05/11/1994', mrn: '17650000967215 • O+', surgeon: 'Dr. James Wilson', anaes: 'Dr. Aisha Rahman', status: 'Airway & Monitoring', start: '13:45', end: '13:45, On Time', delayed: false, tasks: '5/30' },
+                              { or: 'OR - 4', specialty: 'Orthopedics', surgery: 'Open Heart Surgery', patient: 'Rajesh K (M / 29) 05/11/1994', mrn: '17650000967215 • O+', surgeon: 'Dr. Sofia Ramirez', anaes: 'Dr. Priya Nair', status: 'Wound Closure', start: '13:45', end: '13:45, 30mins delay', delayed: true, tasks: '14/20' },
+                              { or: 'OR - 6', specialty: 'Gastrointestinal Surgery', surgery: 'Open Heart Surgery', patient: 'Rajesh K (M / 29) 05/11/1994', mrn: '17650000967215 • O+', surgeon: 'Dr. Ethan Chen', anaes: 'Dr. Carter', status: 'Airway & Monitoring', start: '13:45', end: '13:45, On Time', delayed: false, tasks: '5/30' },
+                              { or: 'OR - 12', specialty: 'Hepatobiliary Surgery', surgery: 'Open Heart Surgery', patient: 'Rajesh K (M / 29) 05/11/1994', mrn: '17650000967215 • O+', surgeon: 'Dr. Aisha Thompson', anaes: 'Dr. Sofia', status: 'Anaesthesia Induction', start: '13:45', end: '13:45, On Time', delayed: false, tasks: '10/20' }
+                            ].map((row, idx) => (
+                              <tr 
+                                key={idx} 
+                                onClick={() => setCurrentNav('workflow')}
+                                className="hover:bg-slate-50 transition-colors cursor-pointer group"
+                              >
+                                <td className="py-3 px-4">
+                                  <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${row.tasks === '14/20' ? 'bg-amber-50 text-amber-700 border-amber-300' : 'bg-red-50 text-red-700 border-red-300'}`}>
+                                    {row.tasks}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-4 font-bold text-slate-900">{row.or}</td>
+                                <td className="py-3 px-4">
+                                  <div className="font-semibold text-slate-900">{row.specialty}</div>
+                                  <div className="text-[11px] text-slate-500">{row.surgery}</div>
+                                </td>
+                                <td className="py-3 px-4">
+                                  <div className="font-semibold text-slate-900">{row.patient}</div>
+                                  <div className="text-[11px] text-slate-500">{row.mrn}</div>
+                                </td>
+                                <td className="py-3 px-4 font-medium text-slate-800">{row.surgeon}</td>
+                                <td className="py-3 px-4 font-medium text-slate-800">{row.anaes}</td>
+                                <td className="py-3 px-4">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px] font-semibold flex items-center gap-1">👤 2</span>
+                                    <span className="px-2 py-0.5 rounded bg-pink-100 text-pink-700 text-[11px] font-semibold flex items-center gap-1">👩‍⚕️ 2</span>
+                                  </div>
+                                </td>
+                                <td className="py-3 px-4 font-semibold text-slate-900">{row.status}</td>
+                                <td className="py-3 px-4 text-slate-700 font-medium">{row.start}</td>
+                                <td className="py-3 px-4">
+                                  <span className={`font-semibold ${row.delayed ? 'text-red-600' : 'text-slate-700'}`}>{row.end}</span>
+                                </td>
+                                <td className="py-3 px-4">
+                                  <div className="grid grid-cols-2 gap-x-2 text-[10px] text-emerald-700">
+                                    <span>✓ Financial</span><span>✓ Crossmatch</span>
+                                    <span>✓ Clinical</span><span>✓ Consent</span>
+                                  </div>
+                                </td>
+                                <td className="py-3 px-4 text-right">
+                                  <Icon name="chevron-right" className="w-4 h-4 text-slate-400 group-hover:text-sky-600"/>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ===================== SUB-TAB: LIVE UPDATES (KANBAN OR OT COLUMNS) ===================== */}
+                  {liveSubTab === 'live-updates' && (
+                    <div className="space-y-4">
+                      {/* 1. KANBAN BOARD */}
+                      {liveViewMode === 'kanban' && (
+                        <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
+                          {[
+                            { title: 'Scheduled', color: 'bg-blue-600', cards: [
+                              { ot: '01', em: true, name: 'Laparoscopic Cholecystectomy', doc: 'Dr. A. Sharma', pat: 'Meera R (F/35) • A+ • 17540000298712', time: '08:30 On Time' },
+                              { ot: '02', em: false, name: 'Total Knee Replacement', doc: 'Dr. S. Patel', pat: 'Ramesh K (M/62) • B+ • 17540000315478', time: '09:30 On Time' },
+                              { ot: '03', em: false, name: 'Appendectomy', doc: 'Dr. P. Reddy', pat: 'Ananya S (F/28) • O+ • 17540000421356', time: '09:30 On Time' }
+                            ]},
+                            { title: 'Wheeled-In', color: 'bg-purple-600', cards: [
+                              { ot: '05', em: false, name: 'Radical Prostatectomy', doc: 'Dr. R. Gupta', pat: 'Suresh M (M/58) • A- • 17540000643210', time: '09:30 On Time' },
+                              { ot: '06', em: false, name: 'Thyroidectomy', doc: 'Dr. N. Desai', pat: 'Priya J (F/41) • B- • 17540000756843', time: '09:30 On Time' }
+                            ]},
+                            { title: 'Anaesthesia', color: 'bg-pink-600', cards: [
+                              { ot: '07', em: true, name: 'Coronary Artery Bypass', doc: 'Dr. K. Menon', pat: 'Rajesh T (M/55) • O- • 17540000862197', time: '09:30 On Time' },
+                              { ot: '09', em: false, name: 'Cataract Phacoemulsification', doc: 'Dr. T. Rao', pat: 'Kamala V (F/68) • B+ • 17540001085674', time: '09:30 Delay 15 min', delay: true }
+                            ]},
+                            { title: 'In Progress', color: 'bg-amber-500', cards: [
+                              { ot: '08', em: true, name: 'Laparoscopic Hysterectomy', doc: 'Dr. D. Joshi', pat: 'Kavitha P (F/52) • AB- • 17540001196438', time: '09:30 On Time' },
+                              { ot: '08', em: false, name: 'Hip Replacement Surgery', doc: 'Dr. B. Singh', pat: 'Arvind G (M/71) • O+ • 17540001207815', time: '09:30 On Time' }
+                            ]},
+                            { title: 'Closure', color: 'bg-orange-600', cards: [
+                              { ot: '08', em: false, name: 'Craniotomy', doc: 'Dr. H. Kapoor', pat: 'Mohan R (M/50) • O- • 17540001534782', time: '09:30 On Time' }
+                            ]},
+                            { title: 'Transferred', color: 'bg-emerald-600', cards: [
+                              { ot: '08', em: false, name: 'Nephrectomy', doc: 'Dr. G. Pillai', pat: 'Lakshmi S (F/56) • AB+ • 17540001645901', time: '09:30 On Time' }
+                            ]}
+                          ].map(col => (
+                            <div key={col.title} className="bg-slate-100 rounded-xl overflow-hidden shadow-sm flex flex-col">
+                              <div className={`${col.color} text-white font-bold text-xs py-2 px-3 text-center`}>
+                                {col.title}
+                              </div>
+                              <div className="p-2 space-y-2 flex-1 overflow-y-auto">
+                                {col.cards.map((c, i) => (
+                                  <div key={i} className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm space-y-1.5 relative overflow-hidden">
+                                    {c.em && <div className="bg-red-600 text-white text-[9px] font-black uppercase tracking-wider py-0.5 text-center -mx-3 -mt-3 mb-2">EMERGENCY</div>}
+                                    <div className="flex justify-between items-start">
+                                      <span className="text-xl font-black text-slate-900">{c.ot}</span>
+                                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${c.delay ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>{c.time}</span>
+                                    </div>
+                                    <div className="font-bold text-xs text-slate-900 leading-tight">{c.name}</div>
+                                    <div className="text-[11px] text-slate-500">{c.doc}</div>
+                                    <div className="text-[10px] text-slate-400">{c.pat}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* 2. MULTI-OT THEATRE PROGRESS BOARD */}
+                      {liveViewMode === 'list' && (
+                        <div className="grid grid-cols-1 md:grid-cols-7 gap-3">
+                          {[
+                            { ot: '05', badge: 'Wheeled-In', bColor: 'bg-blue-600', activeIdx: 0, title: 'Hip Replacement', doc: 'Dr. Amita Sharma', pat: 'Ravi K • M / 52 • O+ / 284500001234567' },
+                            { ot: '06', badge: 'Anaesthesia-In', bColor: 'bg-purple-600', activeIdx: 1, title: 'Cataract Surgery', doc: 'Dr. James Miller', pat: 'Ananya S • F / 45 • B+ / 391200004567890', delay: true },
+                            { ot: '07', badge: 'Incision', bColor: 'bg-pink-600', activeIdx: 2, title: 'ACL Reconstruction', doc: 'Dr. Priya Menon', pat: 'Karthik V • M / 29 • AB+ / 502300007891234' },
+                            { ot: '09', badge: 'Transferred', bColor: 'bg-emerald-600', activeIdx: 5, title: 'Appendectomy', doc: 'Dr. Rajesh Iyer', pat: 'Meera D • F / 34 • O- / 613400002345678' },
+                            { ot: '08', badge: 'Closure', bColor: 'bg-orange-600', activeIdx: 4, title: 'Coronary Bypass', doc: 'Dr. Nisha Gupta', pat: 'Suresh M • M / 61 • A+ / 724500005678901' },
+                            { ot: '10', badge: 'In Progress', bColor: 'bg-amber-500', activeIdx: 3, em: true, title: 'Lumbar Discectomy', doc: 'Dr. Arvind Rao', pat: 'Deepa L • F / 47 • B- / 835600008901234' },
+                            { ot: '11', badge: 'Not Scheduled', bColor: 'bg-slate-700', empty: true }
+                          ].map((col, idx) => (
+                            <div key={idx} className="bg-white border border-slate-200 rounded-xl p-3 shadow-sm flex flex-col justify-between space-y-4">
+                              {col.em && <div className="bg-red-600 text-white text-[9px] font-black uppercase py-0.5 text-center -mx-3 -mt-3 mb-1">EMERGENCY</div>}
+                              <div>
+                                <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                                  <span className="text-2xl font-black text-slate-900">{col.ot}</span>
+                                  <span className={`px-2.5 py-0.5 rounded-full text-white text-[11px] font-bold ${col.bColor}`}>{col.badge}</span>
+                                </div>
+
+                                {col.empty ? (
+                                  <div className="py-16 text-center text-slate-400">
+                                    <Icon name="clock" className="w-8 h-8 mx-auto mb-2 text-slate-300"/>
+                                    <div className="font-bold text-xs text-slate-600">No Active Procedure</div>
+                                    <div className="text-[11px]">Sterilisation in progress</div>
+                                  </div>
+                                ) : (
+                                  <div className="mt-3 space-y-2">
+                                    <div className="font-bold text-xs text-slate-900">{col.title}</div>
+                                    <div className="text-[11px] text-slate-500">{col.doc}</div>
+                                    <div className="text-[10px] text-slate-400 leading-tight">{col.pat}</div>
+
+                                    {/* In-Column Vertical Stepper */}
+                                    <div className="pt-3 space-y-3 relative pl-4 border-l-2 border-slate-200 text-xs">
+                                      {['Wheeled-In', 'Anaesthesia', 'Incision', 'In-Progress', 'Closure', 'Transferred'].map((stg, sIdx) => {
+                                        const isDone = sIdx <= col.activeIdx;
+                                        return (
+                                          <div key={stg} className="relative flex items-center justify-between">
+                                            <div className={`absolute -left-[21px] w-2.5 h-2.5 rounded-full ${isDone ? 'bg-emerald-500' : 'bg-slate-300'}`}></div>
+                                            <span className={`text-[11px] font-semibold ${isDone ? 'text-slate-900' : 'text-slate-400'}`}>{stg}</span>
+                                            {sIdx === col.activeIdx && (
+                                              <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${col.delay ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                                {col.delay ? 'Delay 15 min' : 'On Time'}
+                                              </span>
+                                            )}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Footer Next Case Card */}
+                              <div className="pt-3 border-t border-slate-100 text-[10px]">
+                                <span className="font-bold text-blue-600 uppercase tracking-wider block">Next</span>
+                                <div className="font-semibold text-slate-800">Knee Arthroscopy</div>
+                                <div className="text-slate-500">12:30 - 14:00 • Dr. Priya Menon</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ===================== VIEW 5: SURGICAL WORKFLOW STAGES TRACKER ===================== */}
+              {currentNav === 'workflow' && (
+                <div className="max-w-[1600px] mx-auto flex flex-col gap-4">
+                  
+                  {/* Top Bar with Patient Info & Collapsible Surgery Details */}
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col gap-3">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl font-black text-slate-900">OR-2</span>
+                        <div className="h-5 w-px bg-slate-300"></div>
+                        <span className="text-base font-bold text-slate-900">Open Heart Surgery</span>
+                        <div className="h-5 w-px bg-slate-300"></div>
+                        <span className="text-sm text-slate-600 font-medium">Dr. Aisha Khan</span>
+                      </div>
+                      <button 
+                        onClick={() => setIsWorkflowDetailsOpen(!isWorkflowDetailsOpen)}
+                        className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                      >
+                        Surgery Details <Icon name={isWorkflowDetailsOpen ? "chevron-down" : "chevron-right"} className="w-4 h-4"/>
+                      </button>
+                    </div>
+
+                    <div className="text-xs text-slate-500">
+                      Raghunathan P (M / 24) • 1003638097161
+                    </div>
+
+                    {/* Collapsible Surgery Details Drawer Header */}
+                    {isWorkflowDetailsOpen && (
+                      <div className="pt-4 border-t border-slate-100 grid grid-cols-1 md:grid-cols-3 gap-6 text-xs animate-in slide-in-from-top-2 duration-150">
+                        <div className="space-y-1">
+                          <h5 className="font-bold text-slate-800 mb-1">Surgical Team</h5>
+                          <div className="flex justify-between"><span className="text-slate-500">Anesthetist</span><span className="font-semibold">Dr. Arun Kumar</span></div>
+                          <div className="flex justify-between"><span className="text-slate-500">Nurse 1</span><span className="font-semibold">Priya Nair</span></div>
+                          <div className="flex justify-between"><span className="text-slate-500">Nurse 2</span><span className="font-semibold">Suresh Menon</span></div>
+                        </div>
+                        <div className="space-y-1">
+                          <h5 className="font-bold text-slate-800 mb-1">Blood Details</h5>
+                          <div className="flex justify-between"><span className="text-slate-500">Blood Group</span><span className="font-semibold">A+</span></div>
+                          <div className="flex justify-between"><span className="text-slate-500">Cross Match</span><span className="font-semibold">2 Units</span></div>
+                          <div className="flex justify-between"><span className="text-slate-500">Consent</span><span className="font-semibold text-emerald-600">Verified</span></div>
+                        </div>
+                        <div className="space-y-1">
+                          <h5 className="font-bold text-slate-800 mb-1">Device Details</h5>
+                          <div className="flex justify-between"><span className="text-slate-500">Ventilator</span><span className="font-semibold text-emerald-600">Ready</span></div>
+                          <div className="flex justify-between"><span className="text-slate-500">Defibrillator</span><span className="font-semibold text-emerald-600">Ready</span></div>
+                          <div className="flex justify-between"><span className="text-slate-500">Suction</span><span className="font-semibold text-emerald-600">Ready</span></div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Main Tracker: Left 11 Stages Timeline + Right Interactive Checklist */}
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    
+                    {/* Left Stages Stepper (4 Cols) */}
+                    <div className="lg:col-span-4 bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4">
+                      <h4 className="font-bold text-xs uppercase tracking-wider text-slate-700">SURGICAL WORKFLOW STAGES</h4>
+                      
+                      <div className="space-y-3 relative pl-6 border-l-2 border-slate-200">
+                        {[
+                          { id: 'stg-1', time: '10:00', title: 'Patient Entry', done: true },
+                          { id: 'stg-2', time: '10:20', title: 'Pre-Op Verification', active: true, assigned: 'Arun Kumar (Care Team)' },
+                          { id: 'stg-3', time: '10:00', title: 'Anaesthesia Induction' },
+                          { id: 'stg-4', time: '-', title: 'Airway & Monitoring' },
+                          { id: 'stg-5', time: '-', title: 'Patient Positioning' },
+                          { id: 'stg-6', time: '-', title: 'Surgical Timeout' },
+                          { id: 'stg-7', time: '-', title: 'Surgery Start' },
+                          { id: 'stg-8', time: '-', title: 'Intra-Op Events' },
+                          { id: 'stg-9', time: '-', title: 'Wound Closure' },
+                          { id: 'stg-10', time: '-', title: 'Anaesthesia Reversal' },
+                          { id: 'stg-11', time: '-', title: 'OT Notes' }
+                        ].map(stg => (
+                          <div key={stg.id} className="relative flex items-start justify-between py-1">
+                            {/* Dot */}
+                            <div className={`absolute -left-[31px] top-1.5 w-4 h-4 rounded-full flex items-center justify-center text-white text-[10px] ${stg.done ? 'bg-emerald-500 ring-4 ring-emerald-50' : stg.active ? 'bg-amber-500 ring-4 ring-amber-50' : 'bg-slate-300'}`}>
+                              {stg.done ? '✓' : ''}
+                            </div>
+                            
+                            <div>
+                              <div className="text-[10px] text-slate-400 font-semibold">{stg.time}</div>
+                              <div className={`text-xs font-bold ${stg.active ? 'text-blue-600' : 'text-slate-800'}`}>{stg.title}</div>
+                              {stg.assigned && <div className="text-[10px] text-slate-500">{stg.assigned}</div>}
+                            </div>
+
+                            {stg.active && (
+                              <button 
+                                onClick={() => alert('Stage Pre-Op Verification marked as completed!')}
+                                className="px-3 py-1 bg-blue-600 text-white rounded text-xs font-semibold hover:bg-blue-700"
+                              >
+                                Done
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Right Checklist & Hands-Free Voice Assistant (8 Cols) */}
+                    <div className="lg:col-span-8 bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col justify-between">
+                      <div className="space-y-4">
+                        {/* Header & Stage Carousel */}
+                        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                          <h4 className="font-bold text-sm text-slate-800">Tasks</h4>
+                          <div className="w-56 relative">
+                            <Icon name="search" className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2"/>
+                            <input type="text" placeholder="Search Task" className="w-full pl-8 pr-2.5 py-1 text-xs border border-slate-300 rounded-lg outline-none"/>
+                          </div>
+                        </div>
+
+                        {/* Stage Pills */}
+                        <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+                          <button className="px-3 py-1 rounded-full bg-sky-50 text-sky-700 border border-sky-300 font-bold shrink-0">Pre-Op Verification</button>
+                          <button className="px-3 py-1 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0 font-medium">Anaesthesia Induction</button>
+                          <button className="px-3 py-1 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0 font-medium">Airway & Monitoring</button>
+                          <button className="px-3 py-1 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 shrink-0 font-medium">Patient Positioning</button>
+                        </div>
+
+                        {/* Checklist Questions */}
+                        <div className="divide-y divide-slate-100">
+                          {workflowChecklist.map((item, idx) => (
+                            <div key={item.id} className="py-3 flex items-center justify-between">
+                              <span className="text-xs font-medium text-slate-800">
+                                {idx + 1}. {item.text}
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <button 
+                                  onClick={() => setWorkflowChecklist(prev => prev.map(q => q.id === item.id ? { ...q, value: 'Yes' } : q))}
+                                  className={`px-4 py-1 rounded-full text-xs font-semibold border transition-colors ${item.value === 'Yes' ? 'bg-sky-50 border-sky-500 text-sky-700' : 'border-slate-300 text-slate-600 hover:bg-slate-50'}`}
+                                >
+                                  Yes
+                                </button>
+                                <button 
+                                  onClick={() => setWorkflowChecklist(prev => prev.map(q => q.id === item.id ? { ...q, value: 'No' } : q))}
+                                  className={`px-4 py-1 rounded-full text-xs font-semibold border transition-colors ${item.value === 'No' ? 'bg-sky-50 border-sky-500 text-sky-700' : 'border-slate-300 text-slate-600 hover:bg-slate-50'}`}
+                                >
+                                  No
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Bottom Voice Control Bar */}
+                      <div className="mt-8 pt-4 border-t border-slate-200">
+                        {isListening ? (
+                          /* Active Listening Waveform Mode */
+                          <div className="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-xl p-3 animate-in fade-in">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-sky-600">🔊 Speaking...</span>
+                            </div>
+                            
+                            {/* Animated Audio Waveform Bars */}
+                            <div className="flex items-center gap-1 h-8">
+                              <div className="w-1 bg-red-500 wave-bar rounded" style={{ animationDelay: '0.1s' }}></div>
+                              <div className="w-1 bg-red-500 wave-bar rounded" style={{ animationDelay: '0.3s' }}></div>
+                              <div className="w-1 bg-red-500 wave-bar rounded" style={{ animationDelay: '0.2s' }}></div>
+                              <div className="w-1 bg-red-500 wave-bar rounded" style={{ animationDelay: '0.4s' }}></div>
+                              <div className="w-1 bg-red-500 wave-bar rounded" style={{ animationDelay: '0.15s' }}></div>
+                              <div className="w-1 bg-red-500 wave-bar rounded" style={{ animationDelay: '0.35s' }}></div>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                              <button 
+                                onClick={toggleVoiceAssistant} 
+                                className="w-8 h-8 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center font-bold"
+                              >
+                                ⏹
+                              </button>
+                              <button 
+                                onClick={() => { setIsListening(false); alert('Workflow progress saved!'); setCurrentNav('live'); }}
+                                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold"
+                              >
+                                Done
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          /* Standard Speak Input */
+                          <div className="flex items-center gap-3">
+                            <input 
+                              type="text" 
+                              placeholder="Speak..." 
+                              className="flex-1 px-4 py-2 text-xs border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                            <button 
+                              onClick={toggleVoiceAssistant}
+                              title="Start Voice Assistant"
+                              className="w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow transition-colors"
+                            >
+                              <Icon name="mic" className="w-5 h-5"/>
+                            </button>
+                            <button 
+                              onClick={() => { alert('Stage Completed!'); setCurrentNav('live'); }}
+                              className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-sm"
+                            >
+                              Done
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </main>
+          </div>
+
+          {/* ===================== MODAL: FILTER POPUP ===================== */}
+          {isFilterModalOpen && (
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-2xl p-6 space-y-5 animate-in zoom-in-95 duration-150">
+                <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+                  <h3 className="text-base font-bold text-slate-900">Filter</h3>
+                  <button onClick={() => setIsFilterModalOpen(false)} className="text-slate-400 hover:text-slate-600">✕</button>
+                </div>
+
+                {/* Quick Filters */}
+                <div>
+                  <label className="text-xs font-semibold text-slate-700 block mb-2">Quick Filters:</label>
+                  <div className="flex gap-2">
+                    {['Pending PAC', 'Emergency Surgery', 'Urgent Surgery'].map(q => (
+                      <button key={q} className="px-3 py-1 rounded-full border border-slate-300 text-xs text-slate-700 hover:bg-slate-100 font-medium">{q}</button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Fields Grid */}
+                <div className="grid grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <label className="font-semibold text-slate-700 block mb-1">Surgery/Department</label>
+                    <input type="text" placeholder="Select" className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none"/>
+                  </div>
+                  <div>
+                    <label className="font-semibold text-slate-700 block mb-1">Surgeon</label>
+                    <input type="text" placeholder="Search" className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none"/>
+                  </div>
+                  <div>
+                    <label className="font-semibold text-slate-700 block mb-1">Date *</label>
+                    <input type="text" placeholder="DD-MM-YYYY" className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none"/>
+                  </div>
+                  <div>
+                    <label className="font-semibold text-slate-700 block mb-1">Time</label>
+                    <input type="text" placeholder="Select" className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none"/>
+                  </div>
+                </div>
+
+                {/* Pill Selectors */}
+                <div className="space-y-3 text-xs">
+                  <div>
+                    <label className="font-semibold text-slate-700 block mb-1.5">PAC</label>
+                    <div className="flex flex-wrap gap-2">
+                      {['Cleared', 'Re-evaluation Required', 'Not Cleared', 'Provisionally Cleared'].map(p => (
+                        <button key={p} className="px-3 py-1 rounded-full border border-slate-300 text-slate-700 hover:border-blue-500 font-medium">{p}</button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="font-semibold text-slate-700 block mb-1.5">Patient Status</label>
+                    <div className="flex flex-wrap gap-2">
+                      {['Marked for IP', 'Under IP Care', 'Admitted To IP'].map(p => (
+                        <button key={p} className="px-3 py-1 rounded-full border border-slate-300 text-slate-700 hover:border-blue-500 font-medium">{p}</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Buttons */}
+                <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                  <button onClick={() => { setFilterApplied(false); setIsFilterModalOpen(false); }} className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50">Reset</button>
+                  <button onClick={() => { setFilterApplied(true); setIsFilterModalOpen(false); }} className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold">Apply Filters</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ===================== MODAL: CANCEL REQUEST POPUP ===================== */}
+          {isCancelModalOpen && selectedCancelCase && (
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4 animate-in zoom-in-95 duration-150">
+                <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                  <h3 className="text-base font-bold text-slate-900">Cancel Request?</h3>
+                  <button onClick={() => setIsCancelModalOpen(false)} className="text-slate-400 hover:text-slate-600">✕</button>
+                </div>
+                <div className="text-xs text-slate-600 text-center py-2 space-y-1">
+                  <div>Cancel request for <strong className="text-slate-900">{selectedCancelCase.patientName}</strong>?</div>
+                  <div className="text-slate-500">{selectedCancelCase.dob} • {selectedCancelCase.mrn} • {selectedCancelCase.surgeryName}</div>
+                  <div className="font-semibold text-slate-700 pt-1">Please provide a reason to continue.</div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Reason*</label>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. Equipment maintenance, Staff shortage..."
+                    value={cancelReason}
+                    onChange={e => setCancelReason(e.target.value)}
+                    className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="flex justify-end gap-3 pt-3">
+                  <button onClick={() => setIsCancelModalOpen(false)} className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50">Cancel</button>
+                  <button onClick={handleConfirmCancel} className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold">Continue</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ===================== MODAL: PRE-OP CLEARANCE POPUP ===================== */}
+          {isPreOpModalOpen && selectedPreOpPatient && (
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4 animate-in zoom-in-95 duration-150">
+                <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                  <h3 className="text-base font-bold text-slate-900">Pre-Op Clearance</h3>
+                  <button onClick={() => setIsPreOpModalOpen(false)} className="text-slate-400 hover:text-slate-600">✕</button>
+                </div>
+                <div className="space-y-3 text-xs">
+                  <div>
+                    <span className="text-slate-400 uppercase text-[10px] font-bold block mb-1">REQUIRED INVESTIGATION</span>
+                    <div className="flex justify-between items-center">
+                      <span className="font-bold text-slate-800 text-sm">Crossmatch</span>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700">PENDING</span>
+                    </div>
+                    <span className="text-[11px] text-slate-400">Uploaded & verified by Lab Technician</span>
+                  </div>
+
+                  <div>
+                    <span className="text-slate-700 font-semibold block mb-1">Attach Documents</span>
+                    <div className="border border-dashed border-slate-300 rounded-xl p-4 text-center cursor-pointer hover:bg-slate-50">
+                      <Icon name="paperclip" className="w-5 h-5 mx-auto text-blue-600 mb-1"/>
+                      <span className="text-blue-600 font-semibold">Upload Document</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-slate-700 font-semibold block mb-1">Add Progress Note (optional)</span>
+                    <textarea placeholder="Type a detailed clinical finding or update..." rows="3" className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-3 pt-3">
+                  <button onClick={() => setIsPreOpModalOpen(false)} className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50">Cancel</button>
+                  <button onClick={() => { alert('Pre-Op investigations updated!'); setIsPreOpModalOpen(false); }} className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold">OK</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ===================== MODAL: SCHEDULE PROMPT POPUP ===================== */}
+          {isSchedulePromptOpen && (
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center space-y-4 animate-in zoom-in-95">
+                <h3 className="text-base font-bold text-slate-900">OR Schedule</h3>
+                <p className="text-xs text-slate-600">
+                  Request created for <strong>OT 4</strong>.<br/>Would you like to schedule it now?
+                </p>
+                <div className="flex justify-center gap-3 pt-3">
+                  <button onClick={() => { setIsSchedulePromptOpen(false); setCurrentNav('manager'); }} className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-50">Cancel</button>
+                  <button onClick={() => { setIsSchedulePromptOpen(false); setCurrentNav('schedule-or'); }} className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold">Continue</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ===================== MODAL: CREATE WORK PATTERN ===================== */}
+          {isWorkPatternModalOpen && (
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-xl p-6 space-y-4 animate-in zoom-in-95">
+                <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                  <h3 className="text-base font-bold text-slate-900">Create Work Pattern</h3>
+                  <button onClick={() => setIsWorkPatternModalOpen(false)} className="text-slate-400 hover:text-slate-600">✕</button>
+                </div>
+                <div className="space-y-4 text-xs">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="font-semibold text-slate-700 block mb-1">Unit *</label>
+                      <input type="text" placeholder="Select" className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none"/>
+                    </div>
+                    <div>
+                      <label className="font-semibold text-slate-700 block mb-1">HSC *</label>
+                      <input type="text" defaultValue="OT-4F-AB" className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none"/>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="font-semibold text-slate-700 block mb-1.5">Recur every [ 1 ] week(s) on:</label>
+                    <div className="flex gap-2">
+                      {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map(day => (
+                        <button key={day} className="px-2.5 py-1.5 border border-slate-300 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-100">{day}</button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" id="overbook" defaultChecked className="text-blue-600 rounded"/>
+                    <label htmlFor="overbook" className="font-semibold text-slate-800">Over-booking (No. of slots allowed: 4)</label>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-100">
+                    <div className="flex items-center gap-2 mb-2">
+                      <input type="checkbox" id="unavail" defaultChecked className="text-blue-600 rounded"/>
+                      <label htmlFor="unavail" className="font-bold text-slate-800">Mark as Unavailable</label>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 mb-2">
+                      <input type="text" placeholder="Time DD-MM-YYYY" className="px-3 py-2 border border-slate-300 rounded-lg outline-none"/>
+                      <select defaultValue="OT-10" className="px-3 py-2 border border-slate-300 rounded-lg outline-none">
+                        <option value="OT-10">Select OT (OT-10)</option>
+                      </select>
+                    </div>
+                    <input type="text" defaultValue="Equipment maintenance, Staff shortage..." className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none"/>
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-3">
+                  <button onClick={() => setIsWorkPatternModalOpen(false)} className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold">Cancel</button>
+                  <button onClick={() => { alert('Work pattern saved successfully!'); setIsWorkPatternModalOpen(false); }} className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold">Submit</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ===================== RIGHT DRAWER: SURGICAL TEAM ===================== */}
+          {isTeamDrawerOpen && (
+            <div className="fixed inset-0 bg-black/30 z-50 flex justify-end" onClick={() => setIsTeamDrawerOpen(false)}>
+              <div 
+                className="w-full max-w-md bg-white h-full shadow-2xl p-6 flex flex-col justify-between animate-in slide-in-from-right duration-200"
+                onClick={e => e.stopPropagation()}
+              >
+                <div>
+                  <div className="flex justify-between items-center pb-4 border-b border-slate-100">
+                    <h3 className="text-base font-bold text-slate-900">Surgical Team</h3>
+                    <button onClick={() => setIsTeamDrawerOpen(false)} className="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+                  </div>
+                  <div className="mt-4 bg-white border border-slate-200/80 rounded-2xl p-2 divide-y divide-slate-100 text-xs shadow-2xs">
+                    {(selectedTeamCase?.fullTeam || [
+                      { role: 'Assistant Surgeon', name: 'Dr. Rahul Kumar' },
+                      { role: 'Anaesthetist', name: 'Kumar Ravikant' },
+                      { role: 'Assistant Anaesthetist', name: 'Kumar Ravikant' },
+                      { role: 'Physician Assistant', name: 'Kumar Ravikant' },
+                      { role: 'Scrub Nurse', name: 'Sharon DS' },
+                      { role: 'Floor Nurse', name: 'Krishna Kumar' },
+                      { role: 'Technician', name: 'Krishna Kumar' },
+                    ]).map((member: any, idx: number) => (
+                      <div key={idx} className="flex justify-between items-center py-3 px-3">
+                        <span className="text-slate-600 font-medium">{member.role}</span>
+                        <span className="font-semibold text-slate-900">{member.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ===================== RIGHT DRAWER: MONTH SCHEDULED OR PROCEDURES ===================== */}
+          {isDayDrawerOpen && (
+            <div className="fixed inset-0 bg-black/30 z-50 flex justify-end">
+              <div className="w-full max-w-md bg-white h-full shadow-2xl p-6 flex flex-col justify-between animate-in slide-in-from-right duration-200">
+                <div className="flex-1 overflow-y-auto space-y-4">
+                  <div className="flex justify-between items-start pb-4 border-b border-slate-100">
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900">Scheduled OR</h3>
+                      <span className="text-xs text-slate-500 font-medium">Monday, July 30, 2026 • 20 procedures scheduled</span>
+                    </div>
+                    <button onClick={() => setIsDayDrawerOpen(false)} className="text-slate-400 hover:text-slate-600">✕</button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {selectedDayProcedures.map((proc, idx) => (
+                      <div key={idx} className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-1.5 shadow-sm">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="font-semibold text-slate-500">{proc.time}</span>
+                          <span className="font-bold px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700">{proc.room}</span>
+                          <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${proc.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : proc.status === 'Ongoing' ? 'bg-amber-100 text-amber-700' : 'bg-purple-100 text-purple-700'}`}>{proc.status}</span>
+                        </div>
+                        <div className="font-bold text-slate-900 text-sm">{proc.surgery}</div>
+                        <div className="text-xs text-slate-500">{proc.doc}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ===================== POPOVER: SURGERY DETAILS ON TIMELINE ===================== */}
+          {selectedDaySurgeryPopover && (
+            <div className="fixed inset-0 bg-transparent z-50" onClick={() => setSelectedDaySurgeryPopover(null)}>
+              <div 
+                className="absolute top-1/3 left-1/3 bg-white border border-slate-200 rounded-xl shadow-2xl p-5 w-80 space-y-3 animate-in zoom-in-95"
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="flex justify-between items-center">
+                  <h4 className="font-bold text-slate-900 text-sm">{selectedDaySurgeryPopover.title}</h4>
+                  <span className="px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200 text-xs font-bold">{selectedDaySurgeryPopover.ot}</span>
+                </div>
+                <div className="space-y-1.5 text-xs text-slate-600">
+                  <div className="flex items-center gap-1.5"><Icon name="clock" className="w-3.5 h-3.5 text-slate-400"/><span>{selectedDaySurgeryPopover.time}</span></div>
+                  <div className="flex items-center gap-1.5"><span>🩺</span><span>{selectedDaySurgeryPopover.doctor}</span></div>
+                  <div className="flex items-center gap-1.5"><span>👤</span><span className="truncate">{selectedDaySurgeryPopover.patient}</span></div>
+                </div>
+                <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                  <button onClick={() => setSelectedDaySurgeryPopover(null)} className="px-3 py-1.5 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold">Cancel</button>
+                  <button onClick={() => { alert('Opening Reschedule Form...'); setSelectedDaySurgeryPopover(null); setCurrentNav('schedule-or'); }} className="px-4 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700">Reschedule</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ===================== POPOVER: UNAVAILABLE SLOT ===================== */}
+          {selectedUnavailablePopover && (
+            <div className="fixed inset-0 bg-transparent z-50" onClick={() => setSelectedUnavailablePopover(null)}>
+              <div 
+                className="absolute top-1/2 left-1/3 bg-white border border-slate-200 rounded-xl shadow-2xl p-4 w-72 space-y-2 animate-in zoom-in-95"
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="flex justify-between items-center">
+                  <h4 className="font-bold text-slate-900 text-sm">Not Available</h4>
+                  <span className="px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200 text-xs font-bold">{selectedUnavailablePopover.ot}</span>
+                </div>
+                <div className="text-xs text-slate-600 flex items-center gap-1.5">
+                  <Icon name="clock" className="w-3.5 h-3.5 text-slate-400"/>
+                  <span>{selectedUnavailablePopover.time}</span>
+                </div>
+                <div className="text-xs font-semibold text-slate-800">{selectedUnavailablePopover.reason}</div>
+              </div>
+            </div>
+          )}
+
+        </div>
+      );
+    }
+
+export default App;
